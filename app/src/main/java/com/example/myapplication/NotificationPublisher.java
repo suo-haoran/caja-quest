@@ -34,8 +34,8 @@ public class NotificationPublisher {
                 .setPriority(Notification.DEFAULT_ALL)
                 .setContentIntent(pendingIntent)
                 .setTicker("CS205")
-                .setContentTitle("Time is up!")
-                .setContentText("You timer has reached one minute!")
+                .setContentTitle("Yay")
+                .setContentText("You win")
                 .setContentInfo("Click to get back to the menu.");
         Notification notification = notificationBuilder.build();
         notificationManager.notify(1, notification);

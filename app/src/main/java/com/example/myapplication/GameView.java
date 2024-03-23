@@ -20,6 +20,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         getHolder().addCallback(this);
         setFocusable(View.FOCUSABLE);
         setOnTouchListener((view, event) -> {
+            // TODO: Change this to swipe?
             game.click(event);
             return true;
         });
@@ -28,7 +29,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     @Override
-    public void surfaceCreated(final SurfaceHolder surfaceHolder) {
+    public void surfaceCreated(@NonNull final SurfaceHolder surfaceHolder) {
         if ((gameThread == null) || (gameThread.getState() == Thread.State.TERMINATED)) {
             gameThread = new GameThread(game);
         }
@@ -38,12 +39,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     @Override
-    public void surfaceChanged(final SurfaceHolder surfaceHolder, final int format, final int width, final int height) {
+    public void surfaceChanged(@NonNull final SurfaceHolder surfaceHolder, final int format, final int width, final int height) {
         game.resize(width, height);
     }
 
     @Override
-    public void surfaceDestroyed(final SurfaceHolder surfaceHolder) {
+    public void surfaceDestroyed(@NonNull final SurfaceHolder surfaceHolder) {
         gameThread.stopLoop();
         gameThread = null;
     }
