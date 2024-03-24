@@ -8,12 +8,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.SurfaceHolder;
-import android.view.View;
-
-import java.util.Arrays;
 import java.util.function.Consumer;
 
 public class Game {
@@ -28,12 +23,18 @@ public class Game {
 //    private int circleIndex = 0;
 //    private int crateIndex = 1;
 
-    private int xStep = 50;
-    private int yStep = 50;
-    private final int[][] board = new int[5][];
+    private int xStep = 200;
+    private int yStep = 200;
+
+    private int xOffset = 0;
+    private int yOffset = 30;
+
+    private int numColumns = 5;
+    private int numRows = 5;
+    private final int[][] board = new int[numRows][numColumns];
     private Coordinates circleCoords = new Coordinates(0, 0);
-    private Coordinates crateCoords = new Coordinates(1, 4);
-    private Coordinates endCoords = new Coordinates(3, 5);
+    private Coordinates crateCoords = new Coordinates(4, 3);
+    private Coordinates endCoords = new Coordinates(4, 4);
 
     public Game(Context viewContext, SurfaceHolder holder) {
         this.context = viewContext;
@@ -69,6 +70,7 @@ public class Game {
             Vibrator v = getSystemService(context, Vibrator.class);
             assert v != null;
             v.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
+            return;
         }
         circle.moveX(xDelta * xStep);
         circle.moveY(yDelta * yStep);
@@ -79,14 +81,16 @@ public class Game {
         board[circleCoords.x][circleCoords.y] += 2;
 
         if (circleCoords.equals(crateCoords) && !isOutOfBounds(crateCoords.clone(crateCoords.x + xDelta, crateCoords.y + yDelta))) {
-
             crate.moveX(xDelta * xStep);
             crate.moveY(yDelta * yStep);
 
-            board[crateCoords.x][crateCoords.y] -= 2;
+            board[crateCoords.x][crateCoords.y] -= 1;
             crateCoords.x += xDelta;
             crateCoords.y += yDelta;
-            board[crateCoords.x][crateCoords.y] += 2;
+            board[crateCoords.x][crateCoords.y] += 1;
+        }
+        if (crateCoords.equals(endCoords)) {
+            sendNotification("Yay", "You win!");
         }
     }
 
@@ -143,13 +147,37 @@ public class Game {
             paint.setColor(Color.rgb(end.getR(), end.getG(), end.getB()));
             canvas.drawCircle(end.getX(), end.getY(), end.getRadius(), paint);
         }
+        // Draw grids
+        synchronized (mutex){
+            if (numColumns == 0 || numRows == 0) {
+                return;
+            }
+
+            final Paint paint = new Paint();
+            paint.setColor(Color.WHITE);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(2);
+            int width = 1000;
+            int height = 1000;
+            int cellWidth = 200;
+            int cellHeight = 200;
+
+            for (int i = 0; i < numColumns; i++) {
+                canvas.drawLine(xOffset + i * cellWidth, yOffset, xOffset + i * cellWidth, height + yOffset, paint);
+            }
+
+            for (int i = 0; i < numRows; i++) {
+                canvas.drawLine(xOffset, i * cellHeight + yOffset, width + xOffset, i * cellHeight + yOffset, paint);
+            }
+        }
     }
 
     // This is the initializer for some reason, in real life projects, please use onDraw in view.
     public void resize(int width, int height) {
-        circle = new Circle(50, 100);
-        end = new Circle(250, 100);
-        crate = new Circle(100, 100);
+        int start = 100;
+        circle = new Circle(start + xOffset, yOffset +start);
+        end = new Circle(xOffset + start + endCoords.x * xStep, yOffset + start + endCoords.y * yStep);
+        crate = new Circle(xOffset + start + crateCoords.x * xStep, yOffset + start + crateCoords.y * yStep);
     }
 
     public void update() {

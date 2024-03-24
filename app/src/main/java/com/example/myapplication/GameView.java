@@ -21,6 +21,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         getHolder().addCallback(this);
         setFocusable(View.FOCUSABLE);
         setOnTouchListener(new View.OnTouchListener() {
+            // TODO: Credit https://github.com/plter/Android2048GameLesson/blob/master/code/ide/AndroidStudio/Game2048Publish/app/src/main/java/com/jikexueyuan/game2048publish/GameView.java
             private float startX = 0;
             private float startY =0;
 
