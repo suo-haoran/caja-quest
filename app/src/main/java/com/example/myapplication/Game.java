@@ -1,12 +1,17 @@
 package com.example.myapplication;
 
+import static androidx.core.content.ContextCompat.getSystemService;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
+import android.view.View;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -20,41 +25,77 @@ public class Game {
     private Circle circle;
     private Circle end;
     private Circle crate;
-    private int circleIndex = 0;
-    private int crateIndex = 1;
-    private final int[][] board = new int[1][];
+//    private int circleIndex = 0;
+//    private int crateIndex = 1;
+
+    private int xStep = 50;
+    private int yStep = 50;
+    private final int[][] board = new int[5][];
+    private Coordinates circleCoords = new Coordinates(0, 0);
+    private Coordinates crateCoords = new Coordinates(1, 4);
+    private Coordinates endCoords = new Coordinates(3, 5);
 
     public Game(Context viewContext, SurfaceHolder holder) {
         this.context = viewContext;
         this.holder = holder;
-        // 2 represents player, 1 represent crate
-        board[0] = new int[]{2, 1, 0, 0, 0};
+        // 2 represents player, 1 represent crate, INT_MIN represents trap
+        board[0] = new int[]{2, 0, 0, 0, 0};
+        board[1] = new int[]{0, 0, 0, 0, 0};
+        board[2] = new int[]{0, 0, Integer.MIN_VALUE, 0, 0}; // trap at 2,2
+        board[3] = new int[]{0, 0, 0, 0, 0};
+        board[4] = new int[]{0, 0, 0, 1, 0};
     }
 
-    public void click(MotionEvent event) {
-        if (crateIndex == board[0].length - 1) {
-            sendNotification();
+    public void swipeRight() {
+        movePlayerAndCrates(1, 0);
+    }
+    public void swipeLeft() {
+        movePlayerAndCrates(-1, 0);
+    }
+    public void swipeUp() {
+        movePlayerAndCrates(0, -1);
+    }
+    public void swipeDown() {
+        movePlayerAndCrates(0, 1);
+    }
+    /**
+     * move player, if crate is in the way, player will push it
+     * Vibrate if player is going out of bounds
+     * @param xDelta +- 1
+     * @param yDelta +- 1
+     */
+    private void movePlayerAndCrates(int xDelta, int yDelta) {
+        if (isOutOfBounds(circleCoords.clone(circleCoords.x + xDelta, circleCoords.y + yDelta))) {
+            Vibrator v = getSystemService(context, Vibrator.class);
+            assert v != null;
+            v.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
         }
-        if (circleIndex + 1 != board[0].length) {
-            circle.moveX(50);
-            board[0][circleIndex] -= 2;
-            circleIndex++;
-            board[0][circleIndex] += 2;
-        }
+        circle.moveX(xDelta * xStep);
+        circle.moveY(yDelta * yStep);
 
-        if (circleIndex == crateIndex && crateIndex + 1 != board[0].length) {
-            crate.moveX(50);
-            board[0][crateIndex] -= 1;
-            crateIndex++;
-            board[0][crateIndex] += 1;
+        board[circleCoords.x][circleCoords.y] -= 2;
+        circleCoords.x += xDelta;
+        circleCoords.y += yDelta;
+        board[circleCoords.x][circleCoords.y] += 2;
+
+        if (circleCoords.equals(crateCoords) && !isOutOfBounds(crateCoords.clone(crateCoords.x + xDelta, crateCoords.y + yDelta))) {
+
+            crate.moveX(xDelta * xStep);
+            crate.moveY(yDelta * yStep);
+
+            board[crateCoords.x][crateCoords.y] -= 2;
+            crateCoords.x += xDelta;
+            crateCoords.y += yDelta;
+            board[crateCoords.x][crateCoords.y] += 2;
         }
-        Log.d("Game", "Circle Index " + circleIndex);
-        Log.d("Game", "CrateIndex " + crateIndex);
-        Log.d("Game", Arrays.toString(board[0]));
     }
 
-    private void sendNotification() {
-        NotificationPublisher.showNotification(context);
+    private boolean isOutOfBounds(Coordinates coord) {
+        return coord.x < 0 || coord.x >= board[0].length || coord.y < 0 || coord.y >= board.length;
+    }
+
+    private void sendNotification(String title, String message) {
+        NotificationPublisher.showNotification(context, title, message);
     }
 
     private boolean useCanvas(final Consumer<Canvas> onDraw) {
@@ -86,24 +127,21 @@ public class Game {
             return;
         }
         // Draw the Player.
-        {
+        synchronized (mutex){
             canvas.drawColor(Color.BLACK);
             final Paint paint = new Paint();
             paint.setColor(Color.rgb(circle.getR(), circle.getG(), circle.getB()));
             canvas.drawCircle(circle.getX(), circle.getY(), circle.getRadius(), paint);
+
+            // Draw Crate
+            paint.setColor(Color.rgb(crate.getR(), crate.getG(), crate.getB()));
+            canvas.drawCircle(crate.getX(), crate.getY(), crate.getRadius(), paint);
         }
         // Draw the end.
         {
             final Paint paint = new Paint();
             paint.setColor(Color.rgb(end.getR(), end.getG(), end.getB()));
             canvas.drawCircle(end.getX(), end.getY(), end.getRadius(), paint);
-        }
-        // Draw Boxes
-        {
-            final Paint paint = new Paint();
-            paint.setColor(Color.rgb(crate.getR(), crate.getG(), crate.getB()));
-
-            canvas.drawCircle(crate.getX(), crate.getY(), crate.getRadius(), paint);
         }
     }
 

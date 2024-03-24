@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -19,10 +20,42 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         setKeepScreenOn(true);
         getHolder().addCallback(this);
         setFocusable(View.FOCUSABLE);
-        setOnTouchListener((view, event) -> {
-            // TODO: Change this to swipe?
-            game.click(event);
-            return true;
+        setOnTouchListener(new View.OnTouchListener() {
+            private float startX = 0;
+            private float startY =0;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        startX = event.getX();
+                        startY = event.getY();
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        float offsetX = event.getX() - startX;
+                        float offsetY = event.getY() - startY;
+
+//                if (crateIndex == board[0].length - 1) {
+//                    sendNotification("Yay", "You win!");
+//                    break;
+//                }
+                        if (Math.abs(offsetX)>Math.abs(offsetY)) {
+                            if (offsetX <-5) {
+                                game.swipeLeft();
+                            }else if (offsetX >5) {
+                                game.swipeRight();
+                            }
+                        }else{
+                            if (offsetY <-5) {
+                                game.swipeUp();
+                            }else if (offsetY >5) {
+                                game.swipeDown();
+                            }
+                        }
+                        break;
+                }
+                return true;
+            }
         });
         game = new Game(getContext(), getHolder());
         gameThread = new GameThread(game);

@@ -10,7 +10,7 @@ import android.graphics.Color;
 
 import androidx.core.app.NotificationCompat;
 public class NotificationPublisher {
-    public static void showNotification(Context context) {
+    public static void showNotification(Context context, String title, String message) {
         final String channelId = "my_notifications";
         final Object notificationService = context.getSystemService(Context.NOTIFICATION_SERVICE);
         android.app.NotificationManager notificationManager = (NotificationManager)notificationService;
@@ -34,8 +34,8 @@ public class NotificationPublisher {
                 .setPriority(Notification.DEFAULT_ALL)
                 .setContentIntent(pendingIntent)
                 .setTicker("CS205")
-                .setContentTitle("Yay")
-                .setContentText("You win")
+                .setContentTitle(title)
+                .setContentText(message)
                 .setContentInfo("Click to get back to the menu.");
         Notification notification = notificationBuilder.build();
         notificationManager.notify(1, notification);
