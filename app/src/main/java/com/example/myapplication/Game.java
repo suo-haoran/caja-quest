@@ -3,7 +3,9 @@ package com.example.myapplication;
 import static androidx.core.content.ContextCompat.getSystemService;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -22,9 +24,6 @@ public class Game {
     private Circle circle;
     private Circle end;
     private Circle crate;
-//    private int circleIndex = 0;
-//    private int crateIndex = 1;
-
     private final int xStep = 200;
     private final int yStep = 200;
 
@@ -47,7 +46,7 @@ public class Game {
     private final Counter frameCounter = new Counter();
 
     private final ElapsedTimer elapsedTimer = new ElapsedTimer();
-
+    private long startTime;
     private final DeltaStepper fpsUpdater = new DeltaStepper(intervalFps, this::fpsUpdate);
 
     private final DeltaStepper upsUpdater = new DeltaStepper(intervalUps, this::upsUpdate);
@@ -74,8 +73,11 @@ public class Game {
     private float spinner = 0.0f;
 
     private boolean finished = false;
+
+    PlayerRecordDbHelper dbHelper ;
     public Game(Context viewContext, SurfaceHolder holder) {
         this.context = viewContext;
+        this.dbHelper = new PlayerRecordDbHelper(context);
         this.holder = holder;
         // 2 represents player, 1 represent crate, INT_MIN represents trap
         board[0] = new int[]{2, 0, 0, 0, 0};
@@ -165,6 +167,16 @@ public class Game {
             board[crateCoords.x][crateCoords.y] += 1;
         }
         if (crateCoords.equals(endCoords)) {
+            double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
+            // Gets the data repository in write mode
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+            // Create a new map of values, where column names are the keys
+            ContentValues values = new ContentValues();
+            values.put(PlayerRecordContract.RecordEntry.COLUMN_NAME_TIME, seconds);
+
+            // Insert the new row, returning the primary key value of the new row
+            long newRowId = db.insert(PlayerRecordContract.RecordEntry.TABLE_NAME, null, values);
             sendNotification("Yay", "You win!");
         }
     }
@@ -316,10 +328,12 @@ public class Game {
     public void onDraw(int width, int height) {
         this.width = width;
         this.height = height;
-        int start = 100;
-        circle = new Circle(start + xOffset, yOffset + start);
-        end = new Circle(xOffset + start + endCoords.x * xStep, yOffset + start + endCoords.y * yStep);
-        crate = new Circle(xOffset + start + crateCoords.x * xStep, yOffset + start + crateCoords.y * yStep);
+        startTime = System.currentTimeMillis();
+
+        int startOffset = 100;
+        circle = new Circle(startOffset + xOffset, yOffset + startOffset);
+        end = new Circle(xOffset + startOffset + endCoords.x * xStep, yOffset + startOffset + endCoords.y * yStep);
+        crate = new Circle(xOffset + startOffset + crateCoords.x * xStep, yOffset + startOffset + crateCoords.y * yStep);
     }
 
     private boolean upsUpdate(long deltaTime) {
@@ -364,17 +378,4 @@ public class Game {
         // Immediate updates.
         spinner += (deltaTime / (60.0f * 1000.0f)) * 360.0f;
     }
-    // Calculate Dimensions for Grid
-    // private void calculateDimensions() {
-    //     if (numColumns < 1 || numRows < 1) {
-    //         return;
-    //     }
-
-    //     cellWidth = getWidth() / numColumns;
-    //     cellHeight = getHeight() / numRows;
-
-    //     cellChecked = new boolean[numColumns][numRows];
-
-    //     invalidate();
-    // }
 }
