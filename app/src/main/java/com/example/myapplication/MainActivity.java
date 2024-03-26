@@ -35,8 +35,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void buttonClicked(View view) {
+    public void navToGameActivity(View view) {
         Intent indent = new Intent(this, GameActivity.class);
+        startActivity(indent);
+    }
+
+    public void navToAuthorsActivity(View view) {
+        Intent indent = new Intent(this, AuthorsActivity.class);
+        startActivity(indent);
+    }
+
+    public void navToRecordActivity(View view) {
+        Intent indent = new Intent(this, RecordActivity.class);
         startActivity(indent);
     }
 }
