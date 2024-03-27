@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.util.function.Consumer;
@@ -168,16 +169,9 @@ public class Game {
         }
         if (crateCoords.equals(endCoords)) {
             double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
-            // Gets the data repository in write mode
-            SQLiteDatabase db = dbHelper.getWritableDatabase();
-
-            // Create a new map of values, where column names are the keys
-            ContentValues values = new ContentValues();
-            values.put(PlayerRecordContract.RecordEntry.COLUMN_NAME_TIME, seconds);
-
-            // Insert the new row, returning the primary key value of the new row
-            long newRowId = db.insert(PlayerRecordContract.RecordEntry.TABLE_NAME, null, values);
+            dbHelper.storeRecord(seconds);
             sendNotification("Yay", "You win!");
+            ((Activity) context).finish();
         }
     }
 
@@ -333,7 +327,7 @@ public class Game {
         int startOffset = 100;
         circle = new Circle(startOffset + xOffset, yOffset + startOffset);
         end = new Circle(xOffset + startOffset + endCoords.x * xStep, yOffset + startOffset + endCoords.y * yStep);
-        crate = new Circle(xOffset + startOffset + crateCoords.x * xStep, yOffset + startOffset + crateCoords.y * yStep);
+       crate = new Circle(xOffset + startOffset + crateCoords.x * xStep, yOffset + startOffset + crateCoords.y * yStep);
     }
 
     private boolean upsUpdate(long deltaTime) {
