@@ -1,8 +1,8 @@
 package com.example.myapplication;
 
 public class Record {
-    private int id;
-    private Double timing;
+    private final int id;
+    private final Double timing;
     public Record(int id, Double timing) {
         this.id = id;
         this.timing = timing;

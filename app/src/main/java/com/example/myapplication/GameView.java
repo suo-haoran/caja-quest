@@ -12,8 +12,9 @@ import android.view.View;
 import androidx.annotation.NonNull;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
-    private Game game;
+    private final Game game;
     private GameThread gameThread;
+
     @SuppressLint("ClickableViewAccessibility")
     public GameView(Context context) {
         super(context);
@@ -23,10 +24,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         setOnTouchListener(new View.OnTouchListener() {
             // TODO: Credit https://github.com/plter/Android2048GameLesson/blob/master/code/ide/AndroidStudio/Game2048Publish/app/src/main/java/com/jikexueyuan/game2048publish/GameView.java
             private float startX = 0;
-            private float startY =0;
+            private float startY = 0;
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                if (event.getPointerCount() > 1) {
+                    game.toggleFps();
+                }
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         startX = event.getX();
@@ -40,16 +44,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 //                    sendNotification("Yay", "You win!");
 //                    break;
 //                }
-                        if (Math.abs(offsetX)>Math.abs(offsetY)) {
-                            if (offsetX <-5) {
+                        if (Math.abs(offsetX) > Math.abs(offsetY)) {
+                            if (offsetX < -5) {
                                 game.swipeLeft();
-                            }else if (offsetX >5) {
+                            } else if (offsetX > 5) {
                                 game.swipeRight();
                             }
-                        }else{
-                            if (offsetY <-5) {
+                        } else {
+                            if (offsetY < -5) {
                                 game.swipeUp();
-                            }else if (offsetY >5) {
+                            } else if (offsetY > 5) {
                                 game.swipeDown();
                             }
                         }

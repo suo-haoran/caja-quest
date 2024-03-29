@@ -3,83 +3,70 @@ package com.example.myapplication;
 import static androidx.core.content.ContextCompat.getSystemService;
 
 import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import androidx.core.content.res.ResourcesCompat;
+
+import java.util.Locale;
 import java.util.function.Consumer;
 
 public class Game {
+    private final static int targetFps = 30;
+    private final static long intervalFps = 1000L;
+    private final static long intervalUps = 1000L;
     private final Context context;
     private final SurfaceHolder holder;
+    //private Circle circle;
+    //private Circle end;
+    //private Circle crate;
     private final Object mutex = new Object();
-    private int width = 0;
-    private int height = 0;
-    private Circle circle;
-    private Circle end;
-    private Circle crate;
-    private final int xStep = 200;
-    private final int yStep = 200;
-
-    private final int xOffset = 5;
-    private final int yOffset = 30;
-
     private final int numColumns = 5;
     private final int numRows = 5;
     private final int[][] board = new int[numRows][numColumns];
     private final Coordinates circleCoords = new Coordinates(0, 0);
-    private final Coordinates crateCoords = new Coordinates(4, 3);
+    private final Coordinates crateCoords = new Coordinates(4, 2);
     private final Coordinates endCoords = new Coordinates(4, 4);
-
-    private final static int targetFps = 30;
-
-    private final static long intervalFps = 1000L;
-
-    private final static long intervalUps = 1000L;
-
+    private final Drawable endFlag;
+    private final Drawable player;
+    private final Drawable crate;
     private final Counter frameCounter = new Counter();
-
     private final ElapsedTimer elapsedTimer = new ElapsedTimer();
-    private long startTime;
-    private final DeltaStepper fpsUpdater = new DeltaStepper(intervalFps, this::fpsUpdate);
-
-    private final DeltaStepper upsUpdater = new DeltaStepper(intervalUps, this::upsUpdate);
-
     private final Paint fpsText = new Paint();
-
     private final Paint circlePaint = new Paint();
-
     private final Paint circleOutlinePaint = new Paint();
-
     private final Paint tickPaint = new Paint();
-
     private final Paint handPaint = new Paint();
-
     private final Paint spinnerPaint = new Paint();
-
-
+    PlayerRecordDbHelper dbHelper;
+    private int width = 0;
+    private int height = 0;
+    private long startTime;
     private double avgFps = 0.0;
-
-    private boolean showFps = false;
-
+    private final DeltaStepper fpsUpdater = new DeltaStepper(intervalFps, this::fpsUpdate);
     private int secondCount = 0;
 
     private float spinner = 0.0f;
 
     private boolean finished = false;
+    private final DeltaStepper upsUpdater = new DeltaStepper(intervalUps, this::upsUpdate);
+    private boolean showFps;
 
-    PlayerRecordDbHelper dbHelper ;
     public Game(Context viewContext, SurfaceHolder holder) {
         this.context = viewContext;
         this.dbHelper = new PlayerRecordDbHelper(context);
         this.holder = holder;
+        this.endFlag = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.flag, null);
+        this.player = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.player, null);
+        this.crate = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.crate, null);
         // 2 represents player, 1 represent crate, INT_MIN represents trap
         board[0] = new int[]{2, 0, 0, 0, 0};
         board[1] = new int[]{0, 0, 0, 0, 0};
@@ -136,6 +123,9 @@ public class Game {
         movePlayerAndCrates(0, 1);
     }
 
+    public void toggleFps() {
+        this.showFps = !this.showFps;
+    }
     /**
      * move player, if crate is in the way, player will push it
      * Vibrate if player is going out of bounds
@@ -150,8 +140,6 @@ public class Game {
             v.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
             return;
         }
-        circle.moveX(xDelta * xStep);
-        circle.moveY(yDelta * yStep);
 
         board[circleCoords.x][circleCoords.y] -= 2;
         circleCoords.x += xDelta;
@@ -159,9 +147,6 @@ public class Game {
         board[circleCoords.x][circleCoords.y] += 2;
 
         if (circleCoords.equals(crateCoords) && !isOutOfBounds(crateCoords.clone(crateCoords.x + xDelta, crateCoords.y + yDelta))) {
-            crate.moveX(xDelta * xStep);
-            crate.moveY(yDelta * yStep);
-
             board[crateCoords.x][crateCoords.y] -= 1;
             crateCoords.x += xDelta;
             crateCoords.y += yDelta;
@@ -183,8 +168,7 @@ public class Game {
         NotificationPublisher.showNotification(context, title, message);
     }
 
-    private boolean useCanvas(final Consumer<Canvas> onDraw) {
-        boolean result = false;
+    private void useCanvas(final Consumer<Canvas> onDraw) {
         try {
             final Canvas canvas = holder.lockCanvas();
             try {
@@ -192,15 +176,13 @@ public class Game {
             } finally {
                 try {
                     holder.unlockCanvasAndPost(canvas);
-                    result = true;
                 } catch (final IllegalStateException e) {
                     // Do nothing
                 }
             }
         } catch (final IllegalArgumentException e) {
-            e.printStackTrace();
+            Log.e(getClass().getSimpleName(), "Unexpected err occurred");
         }
-        return result;
     }
 
     public void draw() {
@@ -211,24 +193,47 @@ public class Game {
         if (canvas == null) {
             return;
         }
-        // Draw the end.
-        {
-            final Paint paint = new Paint();
-            paint.setColor(Color.rgb(end.getR(), end.getG(), end.getB()));
-            canvas.drawCircle(end.getX(), end.getY(), end.getRadius(), paint);
-        }
         synchronized (mutex) {
 
+            int cellWidth = 200;
+            int cellHeight = 200;
             canvas.drawColor(Color.BLACK);
 
             // Draw the Player.
             final Paint paint = new Paint();
-            paint.setColor(Color.rgb(circle.getR(), circle.getG(), circle.getB()));
-            canvas.drawCircle(circle.getX(), circle.getY(), circle.getRadius(), paint);
+            int xOffset = 5;
+            int yOffset = 330;
+            player.setBounds(
+                    new Rect(
+                            xOffset + circleCoords.x * cellWidth,
+                            yOffset + circleCoords.y * cellHeight,
+                            xOffset + (circleCoords.x + 1) * cellWidth,
+                            yOffset + (circleCoords.y + 1) * cellHeight
+                    )
+            );
+            player.draw(canvas);
 
             // Draw Crate
-            paint.setColor(Color.rgb(crate.getR(), crate.getG(), crate.getB()));
-            canvas.drawCircle(crate.getX(), crate.getY(), crate.getRadius(), paint);
+            crate.setBounds(
+                    new Rect(
+                            xOffset + crateCoords.x * cellWidth,
+                            yOffset + crateCoords.y * cellHeight,
+                            xOffset + (crateCoords.x + 1) * cellWidth,
+                            yOffset + (crateCoords.y + 1) * cellHeight
+                    )
+            );
+            crate.draw(canvas);
+
+            // Draw the end.
+            endFlag.setBounds(
+                    new Rect(
+                            xOffset + endCoords.x * cellWidth,
+                            yOffset + endCoords.y * cellHeight,
+                            xOffset + (endCoords.x + 1) * cellWidth,
+                            yOffset + (endCoords.y + 1) * cellHeight
+                    )
+            );
+            endFlag.draw(canvas);
 
             // Draw Grids
             paint.setColor(Color.WHITE);
@@ -237,8 +242,6 @@ public class Game {
             paint.setStrokeWidth(10);
             int width = 1000;
             int height = 1000;
-            int cellWidth = 200;
-            int cellHeight = 200;
 
             int i;
             for (i = 0; i <= numColumns; i++) {
@@ -251,8 +254,8 @@ public class Game {
         }
 
         final float radius = Math.min(width, height) * 0.10f;
-        final float centerWidth = width / 2.0f;
-        final float centerHeight = height / 2.0f;
+        final float centerWidth = 150;
+        final float centerHeight = 200;
         // Draw the face of a clock.
         {
             canvas.drawCircle(centerWidth, centerHeight, radius * 1.02f, circleOutlinePaint);
@@ -311,7 +314,7 @@ public class Game {
         {
             if (showFps) {
                 canvas.drawText(
-                        String.format("%.2f", avgFps),
+                        String.format(Locale.getDefault(),"%.2f", avgFps),
                         10.0f, 30.0f,
                         fpsText
                 );
@@ -322,12 +325,7 @@ public class Game {
     public void onDraw(int width, int height) {
         this.width = width;
         this.height = height;
-        startTime = System.currentTimeMillis();
-
-        int startOffset = 100;
-        circle = new Circle(startOffset + xOffset, yOffset + startOffset);
-        end = new Circle(xOffset + startOffset + endCoords.x * xStep, yOffset + startOffset + endCoords.y * yStep);
-       crate = new Circle(xOffset + startOffset + crateCoords.x * xStep, yOffset + startOffset + crateCoords.y * yStep);
+        this.startTime = System.currentTimeMillis();
     }
 
     private boolean upsUpdate(long deltaTime) {
@@ -341,7 +339,7 @@ public class Game {
                     sendNotification("Times up!", "Time limit exceeded");
                     ((Activity) context).finish();
                 } catch (final Exception e) {
-                    e.printStackTrace();
+                    Log.e(getClass().getSimpleName(), "Unexpected err occurred");
                 }
                 spinnerPaint.setColor(Color.BLACK);
             }
@@ -350,10 +348,11 @@ public class Game {
     }
 
     private boolean fpsUpdate(long deltaTime) {
-        final double fractionTime = intervalFps / (double)deltaTime;
+        final double fractionTime = intervalFps / (double) deltaTime;
         avgFps = frameCounter.getValue() * fractionTime;
         return false;
     }
+
     public long getSleepTime() {
         final double targetFrameTime = (1000.0 / targetFps);
         final long updateEndTime = System.currentTimeMillis();
