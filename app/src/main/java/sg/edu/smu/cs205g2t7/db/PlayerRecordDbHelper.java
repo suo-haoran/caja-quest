@@ -1,4 +1,4 @@
-package sg.edu.smu.cs205g2t7;
+package sg.edu.smu.cs205g2t7.db;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -9,6 +9,8 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import sg.edu.smu.cs205g2t7.records.Record;
 
 public class PlayerRecordDbHelper extends SQLiteOpenHelper {
     private static final String SQL_DELETE_ENTRIES =

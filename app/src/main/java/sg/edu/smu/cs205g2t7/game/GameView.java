@@ -1,22 +1,15 @@
-package sg.edu.smu.cs205g2t7;
+package sg.edu.smu.cs205g2t7.game;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 
 import androidx.annotation.NonNull;
-
-import com.google.android.material.snackbar.BaseTransientBottomBar;
-import com.google.android.material.snackbar.Snackbar;
-
-import java.util.Objects;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private final Game game;

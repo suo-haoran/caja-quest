@@ -1,4 +1,4 @@
-package sg.edu.smu.cs205g2t7;
+package sg.edu.smu.cs205g2t7.records;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -11,8 +11,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import sg.edu.smu.cs205g2t7.db.PlayerRecordDbHelper;
+import sg.edu.smu.cs205g2t7.R;
 
 public class RecordsAdapter extends RecyclerView.Adapter<RecordsAdapter.ViewHolder> {
     private static final String TAG = "RecordsAdapter";

@@ -16,6 +16,10 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 
+import sg.edu.smu.cs205g2t7.author.AuthorsActivity;
+import sg.edu.smu.cs205g2t7.game.GameActivity;
+import sg.edu.smu.cs205g2t7.records.RecordActivity;
+
 public class MainActivity extends AppCompatActivity {
     private EditText editTextName;
     @Override

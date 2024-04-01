@@ -1,15 +1,7 @@
-package sg.edu.smu.cs205g2t7;
+package sg.edu.smu.cs205g2t7.game;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.WindowManager;
-
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
-import com.google.android.material.snackbar.BaseTransientBottomBar;
-import com.google.android.material.snackbar.Snackbar;
 
 public class GameActivity extends Activity {
 

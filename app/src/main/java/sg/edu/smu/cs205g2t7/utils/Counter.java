@@ -1,4 +1,4 @@
-package sg.edu.smu.cs205g2t7;
+package sg.edu.smu.cs205g2t7.utils;
 
 /**
  * A class used as a frame-rate counter.

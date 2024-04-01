@@ -1,4 +1,4 @@
-package sg.edu.smu.cs205g2t7;
+package sg.edu.smu.cs205g2t7.game;
 
 import static androidx.core.content.ContextCompat.getSystemService;
 
@@ -18,6 +18,14 @@ import androidx.core.content.res.ResourcesCompat;
 
 import java.util.Locale;
 import java.util.function.Consumer;
+
+import sg.edu.smu.cs205g2t7.backgroundservice.NotificationPublisher;
+import sg.edu.smu.cs205g2t7.R;
+import sg.edu.smu.cs205g2t7.db.PlayerRecordDbHelper;
+import sg.edu.smu.cs205g2t7.utils.Coordinates;
+import sg.edu.smu.cs205g2t7.utils.Counter;
+import sg.edu.smu.cs205g2t7.utils.DeltaStepper;
+import sg.edu.smu.cs205g2t7.utils.ElapsedTimer;
 
 public class Game {
     private final static int targetFps = 30;

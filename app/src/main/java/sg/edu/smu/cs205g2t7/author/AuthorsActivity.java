@@ -1,4 +1,4 @@
-package sg.edu.smu.cs205g2t7;
+package sg.edu.smu.cs205g2t7.author;
 
 import android.os.Bundle;
 
@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import sg.edu.smu.cs205g2t7.R;
 
 public class AuthorsActivity extends AppCompatActivity {
 

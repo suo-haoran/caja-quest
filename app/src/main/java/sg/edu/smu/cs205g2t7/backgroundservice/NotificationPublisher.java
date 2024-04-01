@@ -1,4 +1,4 @@
-package sg.edu.smu.cs205g2t7;
+package sg.edu.smu.cs205g2t7.backgroundservice;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -9,6 +9,10 @@ import android.content.Intent;
 import android.graphics.Color;
 
 import androidx.core.app.NotificationCompat;
+
+import sg.edu.smu.cs205g2t7.MainActivity;
+import sg.edu.smu.cs205g2t7.R;
+
 public class NotificationPublisher {
     public static void showNotification(Context context, String title, String message) {
         final String channelId = "my_notifications";
