@@ -1,9 +1,11 @@
 package sg.edu.smu.cs205g2t7;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -11,18 +13,23 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.material.snackbar.BaseTransientBottomBar;
+import com.google.android.material.snackbar.Snackbar;
+
+import java.util.Objects;
+
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private final Game game;
     private GameThread gameThread;
 
     @SuppressLint("ClickableViewAccessibility")
-    public GameView(Context context) {
+    public GameView(Context context, String playerName) {
         super(context);
         setKeepScreenOn(true);
         getHolder().addCallback(this);
         setFocusable(View.FOCUSABLE);
         setOnTouchListener(new OnTouchListener() {
-            // TODO: Credit https://github.com/plter/Android2048GameLesson/blob/master/code/ide/AndroidStudio/Game2048Publish/app/src/main/java/com/jikexueyuan/game2048publish/GameView.java
+            // Credit: https://github.com/plter/Android2048GameLesson/blob/master/code/ide/AndroidStudio/Game2048Publish/app/src/main/java/com/jikexueyuan/game2048publish/GameView.java
             private float startX = 0;
             private float startY = 0;
 
@@ -62,7 +69,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 return true;
             }
         });
-        game = new Game(getContext(), getHolder());
+        game = new Game(getContext(), getHolder(), playerName);
         gameThread = new GameThread(game);
     }
 
@@ -74,6 +81,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         final Rect rect = getHolder().getSurfaceFrame();
         game.onDraw(rect.width(), rect.height());
         gameThread.startLoop();
+
     }
 
     @Override

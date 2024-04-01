@@ -32,7 +32,7 @@ public class Game {
     private final int numColumns = 5;
     private final int numRows = 5;
     private final int[][] board = new int[numRows][numColumns];
-    private final Coordinates circleCoords = new Coordinates(0, 0);
+    private final Coordinates playerCoords = new Coordinates(0, 0);
     private final Coordinates crateCoords = new Coordinates(4, 2);
     private final Coordinates endCoords = new Coordinates(4, 4);
     private final Drawable endFlag;
@@ -46,6 +46,7 @@ public class Game {
     private final Paint tickPaint = new Paint();
     private final Paint handPaint = new Paint();
     private final Paint spinnerPaint = new Paint();
+    private final String playerName;
     PlayerRecordDbHelper dbHelper;
     private int width = 0;
     private int height = 0;
@@ -60,12 +61,13 @@ public class Game {
     private final DeltaStepper upsUpdater = new DeltaStepper(intervalUps, this::upsUpdate);
     private boolean showFps;
 
-    public Game(Context viewContext, SurfaceHolder holder) {
+    public Game(Context viewContext, SurfaceHolder holder, String playerName) {
         this.context = viewContext;
         this.dbHelper = new PlayerRecordDbHelper(context);
         this.holder = holder;
         this.endFlag = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.flag, null);
         this.player = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.player, null);
+        this.playerName = playerName;
         this.crate = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.crate, null);
         // 2 represents player, 1 represent crate, INT_MIN represents trap
         board[0] = new int[]{2, 0, 0, 0, 0};
@@ -135,7 +137,7 @@ public class Game {
      */
     private void movePlayerAndCrates(int xDelta, int yDelta) {
         Coordinates nextCoord =
-                circleCoords.clone(circleCoords.x + xDelta, circleCoords.y + yDelta);
+                playerCoords.clone(playerCoords.x + xDelta, playerCoords.y + yDelta);
         // player cannot go out of bounds
         if (isOutOfBounds(nextCoord)) {
             Vibrator v = getSystemService(context, Vibrator.class);
@@ -160,10 +162,10 @@ public class Game {
             return;
         }
 
-        board[circleCoords.x][circleCoords.y] -= 2;
-        circleCoords.x += xDelta;
-        circleCoords.y += yDelta;
-        board[circleCoords.x][circleCoords.y] += 2;
+        board[playerCoords.x][playerCoords.y] -= 2;
+        playerCoords.x += xDelta;
+        playerCoords.y += yDelta;
+        board[playerCoords.x][playerCoords.y] += 2;
 
         if (nextCoord.equals(crateCoords) && !isOutOfBounds(crateCoords.clone(crateCoords.x + xDelta, crateCoords.y + yDelta))) {
             board[crateCoords.x][crateCoords.y] -= 1;
@@ -177,8 +179,16 @@ public class Game {
             sendNotification("Yay", "You win!");
             ((Activity) context).finish();
         }
+
+        if (atCorner(crateCoords)) {
+            sendNotification("Oh no", "You got stuck! Exiting..");
+            ((Activity) context).finish();
+        }
     }
 
+    private boolean atCorner(Coordinates coordinates) {
+        return (coordinates.x == 0 || coordinates.x == board[0].length -1) && (coordinates.y == 0 || coordinates.y == board[0].length - 1);
+    }
     private boolean isOutOfBounds(Coordinates coord) {
         return coord.x < 0 || coord.x >= board[0].length || coord.y < 0 || coord.y >= board.length;
     }
@@ -228,10 +238,10 @@ public class Game {
             int yOffset = 330;
             player.setBounds(
                     new Rect(
-                            xOffset + circleCoords.x * cellWidth,
-                            yOffset + circleCoords.y * cellHeight,
-                            xOffset + (circleCoords.x + 1) * cellWidth,
-                            yOffset + (circleCoords.y + 1) * cellHeight
+                            xOffset + playerCoords.x * cellWidth,
+                            yOffset + playerCoords.y * cellHeight,
+                            xOffset + (playerCoords.x + 1) * cellWidth,
+                            yOffset + (playerCoords.y + 1) * cellHeight
                     )
             );
             player.draw(canvas);
@@ -333,6 +343,12 @@ public class Game {
                     spinnerPaint
             );
         }
+        {
+            Paint paint = new Paint();
+            paint.setTextSize(48);
+            paint.setColor(Color.WHITE);
+            canvas.drawText(playerName, 400, 200, paint);
+        }
         // Draw the frame-rate counter.
         {
             if (showFps) {
@@ -343,6 +359,7 @@ public class Game {
                 );
             }
         }
+
     }
 
     public void onDraw(int width, int height) {

@@ -1,11 +1,11 @@
 package sg.edu.smu.cs205g2t7;
 
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.widget.EditText;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,8 +13,11 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class MainActivity extends AppCompatActivity {
+import com.google.android.material.snackbar.BaseTransientBottomBar;
+import com.google.android.material.snackbar.Snackbar;
 
+public class MainActivity extends AppCompatActivity {
+    private EditText editTextName;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        editTextName = findViewById(R.id.edit_text_name);
     }
 
 
@@ -36,17 +41,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void navToGameActivity(View view) {
-        Intent indent = new Intent(this, GameActivity.class);
-        startActivity(indent);
+        Intent intent = new Intent(this, GameActivity.class);
+        String name = editTextName.getText().toString();
+        if (name.isEmpty()) {
+            Snackbar snackbar = Snackbar.make(findViewById(R.id.main), "Please Input the Name Before Clicking the Start Game Button",BaseTransientBottomBar.LENGTH_LONG);
+            snackbar.show();
+            return;
+        }
+
+        intent.putExtra("name", name);
+        startActivity(intent);
     }
 
     public void navToAuthorsActivity(View view) {
-        Intent indent = new Intent(this, AuthorsActivity.class);
-        startActivity(indent);
+        Intent intent = new Intent(this, AuthorsActivity.class);
+        startActivity(intent);
     }
 
     public void navToRecordActivity(View view) {
-        Intent indent = new Intent(this, RecordActivity.class);
-        startActivity(indent);
+        Intent intent = new Intent(this, RecordActivity.class);
+        startActivity(intent);
     }
 }
