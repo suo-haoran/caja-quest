@@ -8,19 +8,19 @@
     <TextView
         android:id="@+id/txt_record_id"
         android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
+        android:layout_width="220dp"
         android:textAlignment="center"
         android:paddingVertical="10dp"
         android:paddingHorizontal="100dp"
-        android:text="hi"/>
+        android:text="12"/>
 
     <TextView
         android:id="@+id/txt_timing"
         android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
+        android:layout_width="160dp"
         android:textAlignment="center"
         android:paddingVertical="10dp"
         android:paddingHorizontal="60dp"
-        android:text="timing"
+        android:text="12.34"
         />
 </LinearLayout>
