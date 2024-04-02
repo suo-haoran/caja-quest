@@ -105,19 +105,24 @@ It accepts user inputs including swiping left, right, up, down etc. which makes 
 Each swiping input is submitted to a `SwipeExecutorService` which makes it asynchronous.
 
 ## Screen Always On
+
 When a `GameView` is initialized, it will set the screen to always on.
+
 ## Feedbacks
+
 There are three types of feedback mechanism to notify a user:
-1. Snackbar
+1. Snack bar
 2. Notification 
 3. Vibration
 
 When the user did not input any data in the `EditText` in `MainActivity`, a snack bar will show up reminding the user to type in the name.
 
-When a user wins, timesout, or get stuck in the game, a notification will show up informing user the status of the game.
+When a user wins, timeout, or get stuck in the game, a notification will show up informing user the status of the game.
 
 When a user tries to go out of bounds, for example, moving to the right when he's already at the boundary, the device will vibrate to tell him that this is an illegal operation.
+
 ## Records in SQLite
+
 When user wins the game, a record will be stored in the database containing the id and the time taken by the user to complete the game. Users can see their records in the `RecordActivity`.
 
 # Sequence Diagrams
@@ -129,7 +134,50 @@ When user wins the game, a record will be stored in the database containing the 
 ```mermaid
 sequenceDiagram
 User ->> MainActivity: input username and click on START GAME
-MainActivity->>GameActivity: navigate
-GameActivity->>GameView: initialize
-GameView->>Game: initialize
+MainActivity->>GameActivity: navigate (with username in intent)
+GameActivity->>GameView: initialize GameView
+GameView->>GameView: draw Game with username
+GameView-->>GameActivity: GameView
+GameActivity-->>User: GameView
+```
+
+```mermaid
+sequenceDiagram
+User ->> MainActivity: click on ABOUT
+MainActivity ->> AuthorsActivity: navigate
+AuthorsActivity -->> User: display authors
+```
+
+```mermaid
+sequenceDiagram
+User ->> MainActivity: click on Record
+MainActivity ->> RecordActivity: navigate
+RecordActivity ->> Database: SELECT * FROM record;
+Database -->> RecordActivity: List<Record>
+RecordActivity -->> User: Display Records
+```
+
+## Functions
+
+```mermaid
+sequenceDiagram
+User ->> GameView: swipe left
+GameView -->> User: Player Moves Left
+User ->> GameView: swipe right
+GameView -->> User: Player Moves Right
+User ->> GameView: swipe up
+GameView -->> User: Player Moves Up
+User ->> GameView: swipe down
+GameView -->> User: Player Moves Down
+User ->> GameView: swipe down
+GameView -->> User: Player Moves Down
+GameView ->> NotificationPublisher: Player Wins 
+NotificationPublisher -->> User: Yay, you win!
+```
+
+```mermaid
+sequenceDiagram
+User ->> GameView: Does nothing
+GameView ->> NotificationPublisher: After 60 seconds: Player timeout 
+NotificationPublisher -->> User: Oh no, you lose!
 ```
