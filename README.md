@@ -1,15 +1,17 @@
-# Required Features
+# Requirements
+## Required Features
 
 - [x] Contains at least 1 activity drawn using 2D graphics
 - Works in real time
     - [x] Real time elements updated synchronously in each frame(fps)
     - [x] Interval elements updated synchronously (Timer) at predetermined interval steps
-    - [ ] Asynchronous elements updated in threads (Swipe Executor Service)
-- [x] Interactive, responds to user events
-- [x] Perform parallel operations by creating at least one worker thread
+    - [x] Asynchronous elements updated in threads (Swipe Executor Service)
+- [x] Interactive, responds to user events (On Touch Listener)
+- [x] Perform parallel operations by creating at least one worker thread (Game Thread)
 - [x] Ensures that threads synchronize updates to a common state with built-in synchronization primitives (use mutexes)
 
-# Additional Features
+## Additional Features
+
 - At least 1 activity containing Standard GUI Components 
     - [x] MainActivity
     - [x] AuthorsActivity
@@ -19,19 +21,62 @@
 - [x] Screen always on (in GameView)
 - [x] Using intent to pass data (input your name, then start, in MainActivity)
 
+# Code Structure
+
+The code is primarily arranged by activities
+  - author
+  - game
+  - records (named to records because `record` is a keyword in java)
+
+The other packages are auxiliary
+  - db: Handles database logic
+  - utils: Classes not directly related to the Activity / can be used globally
+
+# Features
+
+- Navigation Menu (Main Activity)
+  - Uses `EditText` to get user input and
+  - Uses intent to pass data
+- Show Authors
+  - Standard UI Activity
+  - Uses `RecyclerView` to display the records fetched from SQLite
+- Create and Retrieve Records from database
+  - Preserve a user's winning state when it's terminated
+- A timer for user to keep track of the time
+  - Interval elements updated synchronously at predetermined interval steps (Second hand)
+  - Real time elements updated synchronously in each frame (progressing arc)
+- Game: Pushing crates
+  - Interactive, responds to user events (On Touch Listener)
+  - Perform parallel operations by creating at least one worker thread (Game Thread)
+  - Ensures that threads synchronize updates to a common state with built-in synchronization primitives (use mutexes)
+  - Integrate mobile features: Vibrations and notifications
+    - Vibrations upon winning, going out of bounds, or illegal steps
+    - Notifications upon timeout, winning
+  - Screen Always On
+  - Non-trivial navigation of the back stack via deliberate control of intents that manage activities 
+    - Activity stops when user is timed out
+  - Show FPS with finger gesture (more than 1 finger)
+
 # Todos
 
 - [ ] Sequence Diagram
-- [ ] Make swiper executor service
+- [x] Make swiper executor service
 - [ ] Documentation
-- [ ] Feature List (Features Mapped to Requirements)
-- [ ] Restructure code
+- [x] Feature List (Features Mapped to Requirements)
+- [x] Restructure code
 
 # Features Design
 
 ## 2D Graphics and UI Elements
 
 ### UI Elements
+
+`MainActivity` consist of `EditText` and `Button`s. The `EditText` is used to get user's name and pass the user name to GameActivity
+
+`RecordsActvity` consists of `TextView`s and `RecyclerView`. 
+
+RecyclerView is not as straight forward as other common UI components. Setting up RecyclerView requires 
+defining your own adapter to display the data, as well as the layout (see `res/layout/record_list_item.xml`).
 
 ### 2D Graphics
 
@@ -42,8 +87,18 @@ The `GameView` handles the rendering logic and the `Game` contains the game logi
 `Game` renders two components:
 
 1. Board 
+   - Board is drawn by the `Game` class, it keeps track of the player, flag and the crate's position.
+   - Each time a player tries to move, there are checks put in place to see if the player's movement is valid
+   - If the player's movement is valid, the player will be able to move, otherwise, the device will 
+     vibrate to inform the player that they made a wrong move
+   
+2. Clock
+   - Clock is taken from the lab3 and I believe PJ has done a good job explaining it. 
+     Hence I will not reiterate what PJ have taught.
 
 ## Real time
+
+  - 
 
 ## Interactive
 
@@ -57,3 +112,16 @@ The `GameView` handles the rendering logic and the `Game` contains the game logi
 
 ## Data Flow
 
+# Sequence Diagrams
+
+(Drawn in Mermaid)
+
+## Navigation
+
+```mermaid
+sequenceDiagram
+User ->> MainActivity: input username and click on START GAME
+MainActivity->>GameActivity: navigate
+GameActivity->>GameView: initialize
+GameView->>Game: initialize
+```
