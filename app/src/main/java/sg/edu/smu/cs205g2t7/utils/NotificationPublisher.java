@@ -1,4 +1,4 @@
-package sg.edu.smu.cs205g2t7.backgroundservice;
+package sg.edu.smu.cs205g2t7.utils;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
