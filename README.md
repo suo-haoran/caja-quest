@@ -96,21 +96,29 @@ The `GameView` handles the rendering logic and the `Game` contains the game logi
    - Clock is taken from the lab3 and I believe PJ has done a good job explaining it. 
      Hence I will not reiterate what PJ have taught.
 
-## Real time
+### Real time, Interactive, Thread and Synchronization
 
-  - 
+The `Game` works in real time because the surface will be updated each frame.
 
-## Interactive
+It accepts user inputs including swiping left, right, up, down etc. which makes it interactive.
 
-## Thread and Synchronization
+Each swiping input is submitted to a `SwipeExecutorService` which makes it asynchronous.
 
 ## Screen Always On
+When a `GameView` is initialized, it will set the screen to always on.
+## Feedbacks
+There are three types of feedback mechanism to notify a user:
+1. Snackbar
+2. Notification 
+3. Vibration
 
-## Vibrations and Notifications
+When the user did not input any data in the `EditText` in `MainActivity`, a snack bar will show up reminding the user to type in the name.
 
+When a user wins, timesout, or get stuck in the game, a notification will show up informing user the status of the game.
+
+When a user tries to go out of bounds, for example, moving to the right when he's already at the boundary, the device will vibrate to tell him that this is an illegal operation.
 ## Records in SQLite
-
-## Data Flow
+When user wins the game, a record will be stored in the database containing the id and the time taken by the user to complete the game. Users can see their records in the `RecordActivity`.
 
 # Sequence Diagrams
 
