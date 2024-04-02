@@ -26,6 +26,7 @@ import sg.edu.smu.cs205g2t7.utils.Coordinates;
 import sg.edu.smu.cs205g2t7.utils.Counter;
 import sg.edu.smu.cs205g2t7.utils.DeltaStepper;
 import sg.edu.smu.cs205g2t7.utils.ElapsedTimer;
+import sg.edu.smu.cs205g2t7.utils.SwiperExecutorPool;
 
 public class Game {
     private final static int targetFps = 30;
@@ -37,6 +38,7 @@ public class Game {
     //private Circle end;
     //private Circle crate;
     private final Object mutex = new Object();
+    private final SwiperExecutorPool pool = new SwiperExecutorPool();
     private final int numColumns = 5;
     private final int numRows = 5;
     private final int[][] board = new int[numRows][numColumns];
@@ -118,24 +120,41 @@ public class Game {
     }
 
     public void swipeRight() {
-        movePlayerAndCrates(1, 0);
+        pool.submit(() -> {
+                synchronized (mutex) {
+                    movePlayerAndCrates(1, 0);
+                }
+        });
     }
 
     public void swipeLeft() {
-        movePlayerAndCrates(-1, 0);
+        pool.submit(() -> {
+            synchronized (mutex) {
+                movePlayerAndCrates(-1, 0);
+            }
+        });
     }
 
     public void swipeUp() {
-        movePlayerAndCrates(0, -1);
+        pool.submit(() -> {
+            synchronized (mutex) {
+                movePlayerAndCrates(0, -1);
+            }
+        });
     }
 
     public void swipeDown() {
-        movePlayerAndCrates(0, 1);
+        pool.submit(() -> {
+            synchronized (mutex) {
+                movePlayerAndCrates(0, 1);
+            }
+        });
     }
 
     public void toggleFps() {
         this.showFps = !this.showFps;
     }
+
     /**
      * move player, if crate is in the way, player will push it
      * Vibrate if player is going out of bounds
@@ -195,8 +214,9 @@ public class Game {
     }
 
     private boolean atCorner(Coordinates coordinates) {
-        return (coordinates.x == 0 || coordinates.x == board[0].length -1) && (coordinates.y == 0 || coordinates.y == board[0].length - 1);
+        return (coordinates.x == 0 || coordinates.x == board[0].length - 1) && (coordinates.y == 0 || coordinates.y == board[0].length - 1);
     }
+
     private boolean isOutOfBounds(Coordinates coord) {
         return coord.x < 0 || coord.x >= board[0].length || coord.y < 0 || coord.y >= board.length;
     }
@@ -361,7 +381,7 @@ public class Game {
         {
             if (showFps) {
                 canvas.drawText(
-                        String.format(Locale.getDefault(),"%.2f", avgFps),
+                        String.format(Locale.getDefault(), "%.2f", avgFps),
                         10.0f, 30.0f,
                         fpsText
                 );
