@@ -14,6 +14,9 @@ import androidx.annotation.NonNull;
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private final Game game;
     private GameThread gameThread;
+    public GameView(Context context) {
+        this(context, "Anonymous");
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     public GameView(Context context, String playerName) {
@@ -40,10 +43,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                         float offsetX = event.getX() - startX;
                         float offsetY = event.getY() - startY;
 
-//                if (crateIndex == board[0].length - 1) {
-//                    sendNotification("Yay", "You win!");
-//                    break;
-//                }
                         if (Math.abs(offsetX) > Math.abs(offsetY)) {
                             if (offsetX < -5) {
                                 game.swipeLeft();

@@ -2,6 +2,7 @@ package sg.edu.smu.cs205g2t7.game;
 
 import static androidx.core.content.ContextCompat.getSystemService;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -16,38 +17,33 @@ import android.view.SurfaceHolder;
 
 import androidx.core.content.res.ResourcesCompat;
 
-import java.util.Locale;
+import java.util.List;
 import java.util.function.Consumer;
 
-import sg.edu.smu.cs205g2t7.utils.NotificationPublisher;
 import sg.edu.smu.cs205g2t7.R;
 import sg.edu.smu.cs205g2t7.db.PlayerRecordDbHelper;
 import sg.edu.smu.cs205g2t7.utils.Coordinates;
 import sg.edu.smu.cs205g2t7.utils.Counter;
 import sg.edu.smu.cs205g2t7.utils.DeltaStepper;
 import sg.edu.smu.cs205g2t7.utils.ElapsedTimer;
+import sg.edu.smu.cs205g2t7.utils.Movement;
+import sg.edu.smu.cs205g2t7.utils.NotificationPublisher;
 import sg.edu.smu.cs205g2t7.utils.SwiperExecutorPool;
 
 public class Game {
-    private final static int targetFps = 30;
+    private final static int targetFps = 10;
     private final static long intervalFps = 1000L;
     private final static long intervalUps = 1000L;
     private final Context context;
     private final SurfaceHolder holder;
-    //private Circle circle;
-    //private Circle end;
-    //private Circle crate;
     private final Object mutex = new Object();
     private final SwiperExecutorPool pool = new SwiperExecutorPool();
     private final int numColumns = 5;
-    private final int numRows = 5;
-    private final int[][] board = new int[numRows][numColumns];
+    private final int numRows = 8;
     private final Coordinates playerCoords = new Coordinates(0, 0);
     private final Coordinates crateCoords = new Coordinates(4, 2);
-    private final Coordinates endCoords = new Coordinates(4, 4);
-    private final Drawable endFlag;
-    private final Drawable player;
-    private final Drawable crate;
+    private final Coordinates endCoords = new Coordinates(4, 7);
+    private final List<Coordinates> obstacles = List.of(new Coordinates(2, 1), new Coordinates(3, 5));
     private final Counter frameCounter = new Counter();
     private final ElapsedTimer elapsedTimer = new ElapsedTimer();
     private final Paint fpsText = new Paint();
@@ -57,7 +53,11 @@ public class Game {
     private final Paint handPaint = new Paint();
     private final Paint spinnerPaint = new Paint();
     private final String playerName;
+    private final Drawable endFlag;
+    private final Drawable crate;
+    private final Drawable background;
     PlayerRecordDbHelper dbHelper;
+    private Drawable player;
     private int width = 0;
     private int height = 0;
     private long startTime;
@@ -75,16 +75,11 @@ public class Game {
         this.context = viewContext;
         this.dbHelper = new PlayerRecordDbHelper(context);
         this.holder = holder;
-        this.endFlag = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.flag, null);
-        this.player = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.player, null);
+        this.endFlag = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.execavator, null);
+        this.player = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.still_down, null);
         this.playerName = playerName;
         this.crate = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.crate, null);
-        // 2 represents player, 1 represent crate, INT_MIN represents trap
-        board[0] = new int[]{2, 0, 0, 0, 0};
-        board[1] = new int[]{0, 0, 0, 0, 0};
-        board[2] = new int[]{0, 0, Integer.MIN_VALUE, 0, 0}; // trap at 2,2
-        board[3] = new int[]{0, 0, 0, 0, 0};
-        board[4] = new int[]{0, 0, 0, 1, 0};
+        this.background = ResourcesCompat.getDrawable(context.getResources(), R.drawable.background, null);
 
         // Set the text for a frame-rate counter.
         {
@@ -121,33 +116,62 @@ public class Game {
 
     public void swipeRight() {
         pool.submit(() -> {
-                synchronized (mutex) {
-                    movePlayerAndCrates(1, 0);
-                }
+            synchronized (mutex) {
+                movePlayerAndCrates(1, 0, Movement.RIGHT);
+            }
+
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.still_right, null);
         });
     }
 
     public void swipeLeft() {
         pool.submit(() -> {
             synchronized (mutex) {
-                movePlayerAndCrates(-1, 0);
+                movePlayerAndCrates(-1, 0, Movement.LEFT);
             }
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.still_left, null);
         });
     }
 
     public void swipeUp() {
         pool.submit(() -> {
             synchronized (mutex) {
-                movePlayerAndCrates(0, -1);
+                movePlayerAndCrates(0, -1, Movement.UP);
             }
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.still_up, null);
         });
     }
 
     public void swipeDown() {
         pool.submit(() -> {
             synchronized (mutex) {
-                movePlayerAndCrates(0, 1);
+                movePlayerAndCrates(0, 1, Movement.DOWN);
             }
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.still_down, null);
         });
     }
 
@@ -162,9 +186,8 @@ public class Game {
      * @param xDelta +- 1
      * @param yDelta +- 1
      */
-    private void movePlayerAndCrates(int xDelta, int yDelta) {
-        Coordinates nextCoord =
-                playerCoords.clone(playerCoords.x + xDelta, playerCoords.y + yDelta);
+    private void movePlayerAndCrates(int xDelta, int yDelta, Movement movement) {
+        Coordinates nextCoord = playerCoords.clone(playerCoords.x + xDelta, playerCoords.y + yDelta);
         // player cannot go out of bounds
         if (isOutOfBounds(nextCoord)) {
             Vibrator v = getSystemService(context, Vibrator.class);
@@ -189,16 +212,23 @@ public class Game {
             return;
         }
 
-        board[playerCoords.x][playerCoords.y] -= 2;
+        switch (movement) {
+            case UP ->
+                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_up, null);
+            case DOWN ->
+                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_down, null);
+            case LEFT ->
+                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_left, null);
+            case RIGHT ->
+                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_right, null);
+        }
+
         playerCoords.x += xDelta;
         playerCoords.y += yDelta;
-        board[playerCoords.x][playerCoords.y] += 2;
 
         if (nextCoord.equals(crateCoords) && !isOutOfBounds(crateCoords.clone(crateCoords.x + xDelta, crateCoords.y + yDelta))) {
-            board[crateCoords.x][crateCoords.y] -= 1;
             crateCoords.x += xDelta;
             crateCoords.y += yDelta;
-            board[crateCoords.x][crateCoords.y] += 1;
         }
         if (crateCoords.equals(endCoords)) {
             double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
@@ -214,11 +244,11 @@ public class Game {
     }
 
     private boolean atCorner(Coordinates coordinates) {
-        return (coordinates.x == 0 || coordinates.x == board[0].length - 1) && (coordinates.y == 0 || coordinates.y == board[0].length - 1);
+        return (coordinates.x == 0 || coordinates.x == numColumns - 1) && (coordinates.y == 0 || coordinates.y == numRows - 1);
     }
 
     private boolean isOutOfBounds(Coordinates coord) {
-        return coord.x < 0 || coord.x >= board[0].length || coord.y < 0 || coord.y >= board.length;
+        return coord.x < 0 || coord.x >= numColumns || coord.y < 0 || coord.y >= numRows || obstacles.contains(coord);
     }
 
     private boolean overlapsWithEnd(Coordinates playerCoord) {
@@ -250,68 +280,41 @@ public class Game {
         useCanvas(this::draw);
     }
 
+    @SuppressLint("DefaultLocale")
     private void draw(Canvas canvas) {
         if (canvas == null) {
             return;
         }
         synchronized (mutex) {
-
-            int cellWidth = 200;
-            int cellHeight = 200;
             canvas.drawColor(Color.BLACK);
-
-            // Draw the Player.
-            final Paint paint = new Paint();
             int xOffset = 5;
             int yOffset = 330;
-            player.setBounds(
-                    new Rect(
-                            xOffset + playerCoords.x * cellWidth,
-                            yOffset + playerCoords.y * cellHeight,
-                            xOffset + (playerCoords.x + 1) * cellWidth,
-                            yOffset + (playerCoords.y + 1) * cellHeight
-                    )
-            );
+            int cellWidth = width / numColumns;
+            int cellHeight = (height - yOffset) / numRows;
+            {
+                background.setBounds(new Rect(0, yOffset, width, height));
+                background.draw(canvas);
+            }
+
+            // Draw the Player.
+            player.setBounds(new Rect(xOffset + playerCoords.x * cellWidth, yOffset + playerCoords.y * cellHeight, xOffset + (playerCoords.x + 1) * cellWidth, yOffset + (playerCoords.y + 1) * cellHeight));
             player.draw(canvas);
 
+            // Draw Obstacle
+            for (Coordinates coneCoords : obstacles) {
+                Drawable cone = ResourcesCompat.getDrawable(context.getResources(), R.drawable.safety_cone, null);
+                if (cone != null) {
+                    cone.setBounds(new Rect(xOffset + coneCoords.x * cellWidth, yOffset + coneCoords.y * cellHeight, xOffset + (coneCoords.x + 1) * cellWidth, yOffset + (coneCoords.y + 1) * cellHeight));
+                    cone.draw(canvas);
+                }
+            }
             // Draw Crate
-            crate.setBounds(
-                    new Rect(
-                            xOffset + crateCoords.x * cellWidth,
-                            yOffset + crateCoords.y * cellHeight,
-                            xOffset + (crateCoords.x + 1) * cellWidth,
-                            yOffset + (crateCoords.y + 1) * cellHeight
-                    )
-            );
+            crate.setBounds(new Rect(xOffset + crateCoords.x * cellWidth, yOffset + crateCoords.y * cellHeight, xOffset + (crateCoords.x + 1) * cellWidth, yOffset + (crateCoords.y + 1) * cellHeight));
             crate.draw(canvas);
 
             // Draw the end.
-            endFlag.setBounds(
-                    new Rect(
-                            xOffset + endCoords.x * cellWidth,
-                            yOffset + endCoords.y * cellHeight,
-                            xOffset + (endCoords.x + 1) * cellWidth,
-                            yOffset + (endCoords.y + 1) * cellHeight
-                    )
-            );
+            endFlag.setBounds(new Rect(xOffset + endCoords.x * cellWidth, yOffset + endCoords.y * cellHeight, xOffset + (endCoords.x + 1) * cellWidth, yOffset + (endCoords.y + 1) * cellHeight));
             endFlag.draw(canvas);
-
-            // Draw Grids
-            paint.setColor(Color.WHITE);
-            paint.setAntiAlias(true);
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(10);
-            int width = 1000;
-            int height = 1000;
-
-            int i;
-            for (i = 0; i <= numColumns; i++) {
-                canvas.drawLine(xOffset + i * cellWidth, yOffset, xOffset + i * cellWidth, height + yOffset, paint);
-            }
-
-            for (i = 0; i <= numRows; i++) {
-                canvas.drawLine(xOffset, i * cellHeight + yOffset, width + xOffset, i * cellHeight + yOffset, paint);
-            }
         }
 
         final float radius = Math.min(width, height) * 0.10f;
@@ -334,13 +337,7 @@ public class Game {
                 final double angle = (Math.PI * 2.0) * (i / 60.0);
                 final float x = (float) Math.sin(angle);
                 final float y = (float) Math.cos(angle);
-                canvas.drawLine(
-                        centerWidth + (x * start),
-                        centerHeight - (y * start),
-                        centerWidth + (x * end),
-                        centerHeight - (y * end),
-                        tickPaint
-                );
+                canvas.drawLine(centerWidth + (x * start), centerHeight - (y * start), centerWidth + (x * end), centerHeight - (y * end), tickPaint);
             }
         }
         // Draw the seconds' hand.
@@ -350,26 +347,12 @@ public class Game {
             final double angle = (Math.PI * 2.0) * (secondCount / 60.0);
             final float x = (float) Math.sin(angle);
             final float y = (float) Math.cos(angle);
-            canvas.drawLine(
-                    centerWidth + (x * start),
-                    centerHeight - (y * start),
-                    centerWidth + (x * end),
-                    centerHeight - (y * end),
-                    handPaint
-            );
+            canvas.drawLine(centerWidth + (x * start), centerHeight - (y * start), centerWidth + (x * end), centerHeight - (y * end), handPaint);
         }
         // Draw the progressing arch.
         {
             final float d = radius * 0.95f;
-            canvas.drawArc(
-                    centerWidth - d,
-                    centerHeight - d,
-                    centerWidth + d,
-                    centerHeight + d,
-                    -90, spinner,
-                    false,
-                    spinnerPaint
-            );
+            canvas.drawArc(centerWidth - d, centerHeight - d, centerWidth + d, centerHeight + d, -90, spinner, false, spinnerPaint);
         }
         {
             Paint paint = new Paint();
@@ -380,11 +363,7 @@ public class Game {
         // Draw the frame-rate counter.
         {
             if (showFps) {
-                canvas.drawText(
-                        String.format(Locale.getDefault(), "%.2f", avgFps),
-                        10.0f, 30.0f,
-                        fpsText
-                );
+                canvas.drawText(String.format("%.2f", avgFps), 10.0f, 30.0f, fpsText);
             }
         }
 

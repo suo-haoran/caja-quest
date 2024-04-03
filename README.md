@@ -57,13 +57,6 @@ The other packages are auxiliary
     - Activity stops when user is timed out
   - Show FPS with finger gesture (more than 1 finger)
 
-# Todos
-
-- [ ] Sequence Diagram
-- [x] Make swiper executor service
-- [ ] Documentation
-- [x] Feature List (Features Mapped to Requirements)
-- [x] Restructure code
 
 # Features Design
 
