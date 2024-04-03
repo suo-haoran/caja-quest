@@ -229,15 +229,14 @@ public class Game {
         if (nextCoord.equals(crateCoords) && !isOutOfBounds(crateCoords.clone(crateCoords.x + xDelta, crateCoords.y + yDelta))) {
             crateCoords.x += xDelta;
             crateCoords.y += yDelta;
+            Log.d("CrateCoordinates", crateCoords.x + "," + crateCoords.y);
         }
         if (crateCoords.equals(endCoords)) {
             double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
             dbHelper.storeRecord(seconds);
             sendNotification("Yay", "You win!");
             ((Activity) context).finish();
-        }
-
-        if (atCorner(crateCoords)) {
+        } else if (atCorner(crateCoords)) {
             sendNotification("Oh no", "You got stuck! Exiting..");
             ((Activity) context).finish();
         }
