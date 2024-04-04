@@ -56,6 +56,7 @@ public class Game {
     private final Drawable endFlag;
     private final Drawable crate;
     private final Drawable background;
+    private final Drawable logo;
     PlayerRecordDbHelper dbHelper;
     private Drawable player;
     private int width = 0;
@@ -79,6 +80,7 @@ public class Game {
         this.player = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.still_down, null);
         this.playerName = playerName;
         this.crate = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.crate, null);
+        this.logo = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.logo_small, null);
         this.background = ResourcesCompat.getDrawable(context.getResources(), R.drawable.background, null);
 
         // Set the text for a frame-rate counter.
@@ -290,10 +292,12 @@ public class Game {
             int yOffset = 330;
             int cellWidth = width / numColumns;
             int cellHeight = (height - yOffset) / numRows;
-            {
-                background.setBounds(new Rect(0, yOffset, width, height));
-                background.draw(canvas);
-            }
+            // Background and logo
+            background.setBounds(new Rect(0, 0, width, height));
+            background.draw(canvas);
+
+            logo.setBounds(new Rect(width / 2 - 300, 0, width/2 + 300, 300));
+            logo.draw(canvas);
 
             // Draw the Player.
             player.setBounds(new Rect(xOffset + playerCoords.x * cellWidth, yOffset + playerCoords.y * cellHeight, xOffset + (playerCoords.x + 1) * cellWidth, yOffset + (playerCoords.y + 1) * cellHeight));
@@ -318,7 +322,7 @@ public class Game {
 
         final float radius = Math.min(width, height) * 0.10f;
         final float centerWidth = 150;
-        final float centerHeight = 200;
+        final float centerHeight = 130;
         // Draw the face of a clock.
         {
             canvas.drawCircle(centerWidth, centerHeight, radius * 1.02f, circleOutlinePaint);
@@ -357,7 +361,7 @@ public class Game {
             Paint paint = new Paint();
             paint.setTextSize(48);
             paint.setColor(Color.WHITE);
-            canvas.drawText(playerName, 400, 200, paint);
+            canvas.drawText(playerName, width - 200, 200, paint);
         }
         // Draw the frame-rate counter.
         {

@@ -9,6 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "sg.edu.smu.cs205g2t7"
+        // My phone is too old.. I had to change this to 31 :(
         minSdk = 31
         targetSdk = 34
         versionCode = 1
