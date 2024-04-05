@@ -35,17 +35,17 @@ import sg.edu.smu.cs205g2t7.utils.SwiperExecutorPool;
 public class Game {
     /** Frames per second */
     private final static int targetFps = 30;
-    /** TODO: */
+    /** Interval between each movement */
     private final static long intervalUps = 1000L;
     /** Current Game instance Level */
     private final int level;
     /** Last game instance level  */
     private final int targetLevel;
-    /** TODO: */
+    /** Application Context */
     private final Context context;
-    /** TODO: */
+    /** To lock and unlock the canvas for drawing */
     private final SurfaceHolder holder;
-    /** Mutex asscoiated with drawing on the canvas */
+    /** Mutex associated with drawing on the canvas */
     private final Object mutex = new Object();
     /** Pool of threads that execute an action */
     private final SwiperExecutorPool pool = new SwiperExecutorPool();
@@ -63,17 +63,17 @@ public class Game {
     private List<Coordinates> obstacles;
     /** Stores the time taken for the game */
     private final ElapsedTimer elapsedTimer = new ElapsedTimer();
-    /** TODO: */
+    /** Frame rate counter text */
     private final Paint fpsText = new Paint();
-    /** TODO: */
+    /** Timer Counter */
     private final Paint circlePaint = new Paint();
-    /** TODO: */
+    /** Outline of timer */
     private final Paint circleOutlinePaint = new Paint();
-    /** TODO: */
+    /** Outline of clock ticks */
     private final Paint tickPaint = new Paint();
-    /** TODO: */
+    /** Outline of seconds hand */
     private final Paint handPaint = new Paint();
-    /** TODO: */
+    /** Outline of progression arch */
     private final Paint spinnerPaint = new Paint();
     /** End flag icon */
     private final Drawable endFlag;
@@ -87,24 +87,24 @@ public class Game {
     PlayerRecordDbHelper dbHelper;
     /** Player icon */
     private Drawable player;
-    /** TODO: */
+    /** Canvas width */
     private int width = 0;
-    /** TODO: */
+    /** Canvas Height */
     private int height = 0;
-    /** TODO: */
+    /** start time in milliseconds */
     private long startTime;
-    /** TODO: */
-    private final double avgFps = 0.0;
-    /** TODO: */
+//    /** TODO: */
+//    private final double avgFps = 0.0;
+    /** time elapsed since start */
     private int secondCount = 0;
-    /** TODO: */
+    /** Specifies the sweep angle */
     private float spinner = 0.0f;
     /** Flag when the game is completed. */
     private boolean finished = false;
-    /** TODO: */
+    /** Provides the minimum timedelta to perform an update */
     private final DeltaStepper upsUpdater = new DeltaStepper(intervalUps, this::upsUpdate);
-    /** TODO: */
-    private boolean showFps;
+//    /** TODO: */
+//    private boolean showFps;
     /**
      * Instantiates the game on the current app context, current view and player name.
      * It sets the text for the frame-rate counter, sets the background style,
@@ -130,7 +130,7 @@ public class Game {
         setClockStyle();
     }
     /**
-     * TODO:
+     * Sets styles for the countdown timer
      */
     private void setClockStyle() {
         // Set the text for a frame-rate counter.
@@ -166,7 +166,8 @@ public class Game {
         }
     }
     /**
-     * TODO:
+     * For a new level, create a randomized layout of the crates and obstacles (cones)
+     * This method will populate the crateCoords and obstacles.
      */
     private void randomizeCrateAndConesLocation() {
         Random random = new Random();
@@ -291,7 +292,13 @@ public class Game {
         passLevel();
     }
     /**
-     * TODO:
+     * This method is called when the user passes the level.
+     * The game has two levels.
+     * - At the end of the first level,
+     * the player would be directed to the second
+     * level immediately.
+     * - At the end of the second level, the player would be
+     * directed to the victory screen defined in EndGameActivity.
      */
     private void passLevel() {
         if (crateCoords.equals(endCoords)) {
@@ -314,8 +321,10 @@ public class Game {
         }
     }
     /**
-     * TODO:
-     * @param movement
+     * For a particular movement type, draw the player moving in that direction specifically.
+     * This is reflected in the person icon facing left when travelling left, or facing right
+     * when travelling right, etc.
+     * @param movement the direction of movement defined in sg.edu.cs205g2t7.utils.Movement
      */
     private void changePlayerResource(Movement movement) {
         switch (movement) {
@@ -330,11 +339,11 @@ public class Game {
         }
     }
     /**
-     * TODO:
-     * @param playerNextCoord
-     * @param xDelta
-     * @param yDelta
-     * @return
+     * Checks if a movement is within the boundaries of the screen or not.
+     * @param playerNextCoord next coordinate of player
+     * @param xDelta horizontal displacement of user from current position
+     * @param yDelta vertical displacement of user from current position
+     * @return true if movement is invalid and false otherwise.
      */
     private boolean isInvalidMovement(Coordinates playerNextCoord, int xDelta, int yDelta) {
         return isOutOfBounds(playerNextCoord)  // player cannot go out of bounds
@@ -401,7 +410,8 @@ public class Game {
         useCanvas(this::draw);
     }
     /**
-     * TODO:
+     * Draw the player, obstacles, crate, background, logo, every obstacle, and the
+     * destination.
      * @param canvas
      */
     private synchronized void drawGame(Canvas canvas) {
@@ -440,7 +450,7 @@ public class Game {
         }
     }
     /**
-     * TODO:
+     * Draw the timer face on the canvas
      * @param canvas
      */
     private void drawClock(Canvas canvas) {
@@ -503,9 +513,9 @@ public class Game {
         drawClock(canvas);
     }
     /**
-     * TODO:
-     * @param width
-     * @param height
+     * TODO: Draw the canvas
+     * @param width - canvas width
+     * @param height - canvas height
      */
     public void onDraw(int width, int height) {
         this.width = width;
