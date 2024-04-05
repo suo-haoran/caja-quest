@@ -538,8 +538,8 @@ public class Game {
         return true;
     }
     /**
-     * TODO:
-     * @return
+     * Compute the time that the thread sleeps for
+     * @return duration in milliseconds of the time to sleep the thread
      */
     public long getSleepTime() {
         final double targetFrameTime = (1000.0 / targetFps);
@@ -548,7 +548,7 @@ public class Game {
         return Math.round(targetFrameTime - updateTime);
     }
     /**
-     * TODO:
+     * Update the upsUpdater with a deltaTime
      */
     public void update() {
         final long deltaTime = elapsedTimer.progress();
