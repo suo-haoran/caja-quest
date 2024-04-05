@@ -27,14 +27,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         setFocusable(View.FOCUSABLE);
         setOnTouchListener(new OnTouchListener() {
             // Credit: https://github.com/plter/Android2048GameLesson/blob/master/code/ide/AndroidStudio/Game2048Publish/app/src/main/java/com/jikexueyuan/game2048publish/GameView.java
+            // Must be global variable, or else, only right and down will be triggered
             private float startX = 0;
             private float startY = 0;
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if (event.getPointerCount() > 1) {
-                    game.toggleFps();
-                }
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         startX = event.getX();
@@ -43,20 +41,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                     case MotionEvent.ACTION_UP:
                         float offsetX = event.getX() - startX;
                         float offsetY = event.getY() - startY;
-
-                        if (Math.abs(offsetX) > Math.abs(offsetY)) {
-                            if (offsetX < -5) {
-                                game.swipeLeft();
-                            } else if (offsetX > 5) {
-                                game.swipeRight();
-                            }
-                        } else {
-                            if (offsetY < -5) {
-                                game.swipeUp();
-                            } else if (offsetY > 5) {
-                                game.swipeDown();
-                            }
-                        }
+                        determineAction(offsetX, offsetY);
                         break;
                 }
                 return true;
@@ -65,6 +50,31 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         game = new Game(getContext(), getHolder(), level, 2);
         gameThread = new GameThread(game);
     }
+
+    private void determineAction(float offsetX, float offsetY) {
+        if (Math.abs(offsetX) > Math.abs(offsetY)) {
+            determineLeftRight(offsetX);
+        } else {
+            determineUpDown(offsetY);
+        }
+    }
+
+    private void determineLeftRight(float offsetX) {
+        if (offsetX < -5) {
+            game.swipeLeft();
+        } else if (offsetX > 5) {
+            game.swipeRight();
+        }
+    }
+
+    private void determineUpDown(float offsetY) {
+        if (offsetY < -5) {
+            game.swipeUp();
+        } else if (offsetY > 5) {
+            game.swipeDown();
+        }
+    }
+
 
     @Override
     public void surfaceCreated(@NonNull final SurfaceHolder surfaceHolder) {

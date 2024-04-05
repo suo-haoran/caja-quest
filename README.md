@@ -33,6 +33,8 @@ The destiny of humanity hangs in the balance as Steve, the eco-engineer extraord
 - At least 1 activity containing Standard GUI Components 
     - [x] MainActivity
     - [x] AuthorsActivity
+  - [x] RecordsActivity
+  - [x] EndGameActivity
 - [x] Store User Record in SQLite
 - [x] Notifications on Win
 - [x] Vibrations on out of bounds
@@ -53,8 +55,7 @@ The other packages are auxiliary
 # Features
 
 - Navigation Menu (Main Activity)
-  - Uses `EditText` to get user input and
-  - Uses intent to pass data
+  - Uses intent to pass data (Level number)
 - Show Authors
   - Standard UI Activity
   - Uses `RecyclerView` to display the records fetched from SQLite
@@ -73,16 +74,15 @@ The other packages are auxiliary
   - Screen Always On
   - Non-trivial navigation of the back stack via deliberate control of intents that manage activities 
     - Activity stops when user is timed out
-  - Show FPS with finger gesture (more than 1 finger)
 
 
 # Features Design
 
 ## 2D Graphics and UI Elements
 
-### UI Elements
+### UI Elements (Highlights)
 
-`MainActivity` consist of `EditText` and `Button`s. The `EditText` is used to get user's name and pass the user name to GameActivity
+`MainActivity` consist of `Button`s. The buttons are used for navigation.
 
 `RecordsActvity` consists of `TextView`s and `RecyclerView`. 
 
@@ -122,11 +122,9 @@ When a `GameView` is initialized, it will set the screen to always on.
 ## Feedbacks
 
 There are three types of feedback mechanism to notify a user:
-1. Snack bar
-2. Notification 
-3. Vibration
 
-When the user did not input any data in the `EditText` in `MainActivity`, a snack bar will show up reminding the user to type in the name.
+1. Notification
+2. Vibration
 
 When a user wins, timeout, or get stuck in the game, a notification will show up informing user the status of the game.
 
@@ -144,12 +142,20 @@ When user wins the game, a record will be stored in the database containing the 
 
 ```mermaid
 sequenceDiagram
-User ->> MainActivity: input username and click on START GAME
-MainActivity->>GameActivity: navigate (with username in intent)
-GameActivity->>GameView: initialize GameView
-GameView->>GameView: draw Game with username
-GameView-->>GameActivity: GameView
-GameActivity-->>User: GameView
+  User ->> MainActivity: click on START GAME
+  MainActivity ->> GameActivity: navigate (with level 1 in intent)
+  GameActivity ->> GameView: initialize GameView
+  GameView ->> GameView: draw Game Level 1
+  GameView -->> GameActivity: GameView
+  GameActivity -->> User: GameView
+  User ->> GameActivity: Complete Game Level 1
+  GameActivity ->> GameActivity: navigate (with level 2 in intent)
+  GameActivity ->> GameView: initialize GameView
+  GameView ->> GameView: draw Game Level 2
+  GameView -->> GameActivity: GameView
+  GameActivity -->> User: GameView
+  User ->> GameActivity: Complete Game Level 2
+  GameActivity ->> EndGameActivity: navigate
 ```
 
 ```mermaid

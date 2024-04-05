@@ -1,6 +1,8 @@
 package sg.edu.smu.cs205g2t7.game;
 
 
+import android.util.Log;
+
 /**
  * A class representing the game loop of the demo.
  */
@@ -27,18 +29,18 @@ public class GameThread extends Thread {
         super.run();
         while (isRunning) {
             game.draw();
-            game_sleep();
+            gameSleep();
             game.update();
         }
     }
 
-    private void game_sleep() {
+    private void gameSleep() {
         long sleepTime = game.getSleepTime();
         if (sleepTime > 0) {
             try {
                 sleep(sleepTime);
             } catch (final Exception e) {
-                e.printStackTrace();
+                Log.e(this.getName(), "Sleep Error");
             }
         }
     }

@@ -26,7 +26,6 @@ import sg.edu.smu.cs205g2t7.R;
 import sg.edu.smu.cs205g2t7.db.PlayerRecordDbHelper;
 import sg.edu.smu.cs205g2t7.end.EndGameActivity;
 import sg.edu.smu.cs205g2t7.utils.Coordinates;
-import sg.edu.smu.cs205g2t7.utils.Counter;
 import sg.edu.smu.cs205g2t7.utils.DeltaStepper;
 import sg.edu.smu.cs205g2t7.utils.ElapsedTimer;
 import sg.edu.smu.cs205g2t7.utils.Movement;
@@ -34,8 +33,7 @@ import sg.edu.smu.cs205g2t7.utils.NotificationPublisher;
 import sg.edu.smu.cs205g2t7.utils.SwiperExecutorPool;
 
 public class Game {
-    private final static int targetFps = 10;
-    private final static long intervalFps = 1000L;
+    private final static int targetFps = 30;
     private final static long intervalUps = 1000L;
 
     private final int level;
@@ -51,7 +49,6 @@ public class Game {
     private Coordinates crateCoords;
     private final Coordinates endCoords = new Coordinates(4, 7);
     private List<Coordinates> obstacles;
-    private final Counter frameCounter = new Counter();
     private final ElapsedTimer elapsedTimer = new ElapsedTimer();
     private final Paint fpsText = new Paint();
     private final Paint circlePaint = new Paint();
@@ -68,8 +65,7 @@ public class Game {
     private int width = 0;
     private int height = 0;
     private long startTime;
-    private double avgFps = 0.0;
-    private final DeltaStepper fpsUpdater = new DeltaStepper(intervalFps, this::fpsUpdate);
+    private final double avgFps = 0.0;
     private int secondCount = 0;
 
     private float spinner = 0.0f;
@@ -91,7 +87,10 @@ public class Game {
         this.background = ResourcesCompat.getDrawable(context.getResources(), R.drawable.background, null);
 
         randomizeCrateAndConesLocation();
+        setClockStyle();
+    }
 
+    private void setClockStyle() {
         // Set the text for a frame-rate counter.
         {
             fpsText.setColor(Color.rgb(200, 200, 200));
@@ -198,10 +197,6 @@ public class Game {
         });
     }
 
-    public void toggleFps() {
-        this.showFps = !this.showFps;
-    }
-
     /**
      * move player, if crate is in the way, player will push it
      * Vibrate if player is going out of bounds
@@ -211,43 +206,18 @@ public class Game {
      */
     private void movePlayerAndCrates(int xDelta, int yDelta, Movement movement) {
         Coordinates nextCoord = playerCoords.clone(playerCoords.x + xDelta, playerCoords.y + yDelta);
-        // player cannot go out of bounds
-        if (isOutOfBounds(nextCoord)) {
+        if (isInvalidMovement(nextCoord, xDelta, yDelta)) {
             Vibrator v = getSystemService(context, Vibrator.class);
             assert v != null;
             v.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
             return;
         }
 
-        // player cannot overlap with crates
-        if (nextCoord.equals(crateCoords) && isOutOfBounds(crateCoords.clone(crateCoords.x + xDelta, crateCoords.y + yDelta))) {
-            Vibrator v = getSystemService(context, Vibrator.class);
-            assert v != null;
-            v.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
-            return;
-        }
-
-        // player cannot overlap with end
-        if (overlapsWithEnd(nextCoord)) {
-            Vibrator v = getSystemService(context, Vibrator.class);
-            assert v != null;
-            v.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
-            return;
-        }
-
-        switch (movement) {
-            case UP ->
-                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_up, null);
-            case DOWN ->
-                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_down, null);
-            case LEFT ->
-                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_left, null);
-            case RIGHT ->
-                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_right, null);
-        }
-
+        // Move player
         playerCoords.x += xDelta;
         playerCoords.y += yDelta;
+
+        changePlayerResource(movement);
 
         // Push crate
         if (nextCoord.equals(crateCoords) && !isOutOfBounds(crateCoords.clone(crateCoords.x + xDelta, crateCoords.y + yDelta))) {
@@ -255,7 +225,12 @@ public class Game {
             crateCoords.y += yDelta;
             Log.d("CrateCoordinates", crateCoords.x + "," + crateCoords.y);
         }
+
         // Pass level
+        passLevel();
+    }
+
+    private void passLevel() {
         if (crateCoords.equals(endCoords)) {
             if (level == targetLevel) {
                 double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
@@ -276,6 +251,24 @@ public class Game {
         }
     }
 
+    private void changePlayerResource(Movement movement) {
+        switch (movement) {
+            case UP ->
+                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_up, null);
+            case DOWN ->
+                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_down, null);
+            case LEFT ->
+                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_left, null);
+            case RIGHT ->
+                    player = ResourcesCompat.getDrawable(context.getResources(), R.drawable.moving_right, null);
+        }
+    }
+
+    private boolean isInvalidMovement(Coordinates playerNextCoord, int xDelta, int yDelta) {
+        return isOutOfBounds(playerNextCoord)  // player cannot go out of bounds
+                || (playerNextCoord.equals(crateCoords) && isOutOfBounds(crateCoords.clone(crateCoords.x + xDelta, crateCoords.y + yDelta))) // player cannot overlap with crates
+                || overlapsWithEnd(playerNextCoord); // player cannot overlap with end
+    }
     private boolean atCorner(Coordinates coordinates) {
         return (coordinates.x == 0 || coordinates.x == numColumns - 1) && (coordinates.y == 0 || coordinates.y == numRows - 1);
     }
@@ -313,11 +306,7 @@ public class Game {
         useCanvas(this::draw);
     }
 
-    @SuppressLint("DefaultLocale")
-    private void draw(Canvas canvas) {
-        if (canvas == null) {
-            return;
-        }
+    private synchronized void drawGame(Canvas canvas) {
         synchronized (mutex) {
             canvas.drawColor(Color.BLACK);
             int xOffset = 5;
@@ -328,7 +317,7 @@ public class Game {
             background.setBounds(new Rect(0, 0, width, height));
             background.draw(canvas);
 
-            logo.setBounds(new Rect(width / 2 - 300, 0, width/2 + 300, 300));
+            logo.setBounds(new Rect(width / 2 - 300, 0, width / 2 + 300, 300));
             logo.draw(canvas);
 
             // Draw the Player.
@@ -351,6 +340,9 @@ public class Game {
             endFlag.setBounds(new Rect(xOffset + endCoords.x * cellWidth, yOffset + endCoords.y * cellHeight, xOffset + (endCoords.x + 1) * cellWidth, yOffset + (endCoords.y + 1) * cellHeight));
             endFlag.draw(canvas);
         }
+    }
+
+    private void drawClock(Canvas canvas) {
 
         final float radius = Math.min(width, height) * 0.10f;
         final float centerWidth = 150;
@@ -394,13 +386,14 @@ public class Game {
             paint.setTextSize(48);
             paint.setColor(Color.WHITE);
         }
-        // Draw the frame-rate counter.
-        {
-            if (showFps) {
-                canvas.drawText(String.format("%.2f", avgFps), 10.0f, 30.0f, fpsText);
-            }
+    }
+    @SuppressLint("DefaultLocale")
+    private void draw(Canvas canvas) {
+        if (canvas == null) {
+            return;
         }
-
+        drawGame(canvas);
+        drawClock(canvas);
     }
 
     public void onDraw(int width, int height) {
@@ -428,12 +421,6 @@ public class Game {
         return true;
     }
 
-    private boolean fpsUpdate(long deltaTime) {
-        final double fractionTime = intervalFps / (double) deltaTime;
-        avgFps = frameCounter.getValue() * fractionTime;
-        return false;
-    }
-
     public long getSleepTime() {
         final double targetFrameTime = (1000.0 / targetFps);
         final long updateEndTime = System.currentTimeMillis();
@@ -448,7 +435,6 @@ public class Game {
         }
         // Step updates.
         upsUpdater.update(deltaTime);
-        fpsUpdater.update(deltaTime);
         // Immediate updates.
         spinner += (deltaTime / (60.0f * 1000.0f)) * 360.0f;
     }
