@@ -5,6 +5,7 @@ import static androidx.core.content.ContextCompat.getSystemService;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -18,10 +19,12 @@ import android.view.SurfaceHolder;
 import androidx.core.content.res.ResourcesCompat;
 
 import java.util.List;
+import java.util.Random;
 import java.util.function.Consumer;
 
 import sg.edu.smu.cs205g2t7.R;
 import sg.edu.smu.cs205g2t7.db.PlayerRecordDbHelper;
+import sg.edu.smu.cs205g2t7.end.EndGameActivity;
 import sg.edu.smu.cs205g2t7.utils.Coordinates;
 import sg.edu.smu.cs205g2t7.utils.Counter;
 import sg.edu.smu.cs205g2t7.utils.DeltaStepper;
@@ -34,6 +37,10 @@ public class Game {
     private final static int targetFps = 10;
     private final static long intervalFps = 1000L;
     private final static long intervalUps = 1000L;
+
+    private final int level;
+
+    private final int targetLevel;
     private final Context context;
     private final SurfaceHolder holder;
     private final Object mutex = new Object();
@@ -41,9 +48,9 @@ public class Game {
     private final int numColumns = 5;
     private final int numRows = 8;
     private final Coordinates playerCoords = new Coordinates(0, 0);
-    private final Coordinates crateCoords = new Coordinates(4, 2);
+    private Coordinates crateCoords;
     private final Coordinates endCoords = new Coordinates(4, 7);
-    private final List<Coordinates> obstacles = List.of(new Coordinates(2, 1), new Coordinates(3, 5));
+    private List<Coordinates> obstacles;
     private final Counter frameCounter = new Counter();
     private final ElapsedTimer elapsedTimer = new ElapsedTimer();
     private final Paint fpsText = new Paint();
@@ -52,7 +59,6 @@ public class Game {
     private final Paint tickPaint = new Paint();
     private final Paint handPaint = new Paint();
     private final Paint spinnerPaint = new Paint();
-    private final String playerName;
     private final Drawable endFlag;
     private final Drawable crate;
     private final Drawable background;
@@ -72,16 +78,19 @@ public class Game {
     private final DeltaStepper upsUpdater = new DeltaStepper(intervalUps, this::upsUpdate);
     private boolean showFps;
 
-    public Game(Context viewContext, SurfaceHolder holder, String playerName) {
+    public Game(Context viewContext, SurfaceHolder holder, int level, int targetLevel) {
         this.context = viewContext;
         this.dbHelper = new PlayerRecordDbHelper(context);
         this.holder = holder;
         this.endFlag = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.execavator, null);
         this.player = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.still_down, null);
-        this.playerName = playerName;
+        this.level = level;
+        this.targetLevel = targetLevel;
         this.crate = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.crate, null);
         this.logo = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.logo_small, null);
         this.background = ResourcesCompat.getDrawable(context.getResources(), R.drawable.background, null);
+
+        randomizeCrateAndConesLocation();
 
         // Set the text for a frame-rate counter.
         {
@@ -114,6 +123,18 @@ public class Game {
             spinnerPaint.setStrokeWidth(7);
             spinnerPaint.setStyle(Paint.Style.STROKE);
         }
+    }
+
+    private void randomizeCrateAndConesLocation() {
+        Random random = new Random();
+        random.setSeed(level);
+
+        crateCoords = new Coordinates(random.nextInt(numColumns - 2) + 1, random.nextInt(numRows - 2) + 1);
+
+        obstacles = List.of(
+                new Coordinates(random.nextInt(numColumns - 2) + 1, random.nextInt(numRows - 2) + 1),
+                new Coordinates(random.nextInt(numColumns - 2) + 1, random.nextInt(numRows - 2) + 1)
+        );
     }
 
     public void swipeRight() {
@@ -228,16 +249,27 @@ public class Game {
         playerCoords.x += xDelta;
         playerCoords.y += yDelta;
 
+        // Push crate
         if (nextCoord.equals(crateCoords) && !isOutOfBounds(crateCoords.clone(crateCoords.x + xDelta, crateCoords.y + yDelta))) {
             crateCoords.x += xDelta;
             crateCoords.y += yDelta;
             Log.d("CrateCoordinates", crateCoords.x + "," + crateCoords.y);
         }
+        // Pass level
         if (crateCoords.equals(endCoords)) {
-            double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
-            dbHelper.storeRecord(seconds);
-            sendNotification("Yay", "You win!");
+            if (level == targetLevel) {
+                double seconds = (System.currentTimeMillis() - startTime) / 1000.0;
+                dbHelper.storeRecord(seconds);
+                sendNotification("Yay", "You got the Core of Harmony!");
+                Intent intent = new Intent(context, EndGameActivity.class);
+                context.startActivity(intent);
+            } else {
+                Intent intent = new Intent(context, GameActivity.class);
+                intent.putExtra("level", level + 1);
+                context.startActivity(intent);
+            }
             ((Activity) context).finish();
+            // Reset level
         } else if (atCorner(crateCoords)) {
             sendNotification("Oh no", "You got stuck! Exiting..");
             ((Activity) context).finish();
@@ -361,7 +393,6 @@ public class Game {
             Paint paint = new Paint();
             paint.setTextSize(48);
             paint.setColor(Color.WHITE);
-            canvas.drawText(playerName, width - 200, 200, paint);
         }
         // Draw the frame-rate counter.
         {

@@ -9,8 +9,8 @@ public class GameActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String name = getIntent().getStringExtra("name");
-        GameView v = new GameView(this, name);
+        int level = getIntent().getIntExtra("level", 0);
+        GameView v = new GameView(this, level);
         setContentView(v);
     }
 }

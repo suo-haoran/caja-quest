@@ -10,6 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_width="220dp"
         android:textAlignment="center"
+        android:textColor="@color/orange"
         android:paddingVertical="10dp"
         android:paddingHorizontal="100dp"
         android:text="12"/>
@@ -19,6 +20,7 @@
         android:layout_height="wrap_content"
         android:layout_width="160dp"
         android:textAlignment="center"
+        android:textColor="@color/orange"
         android:paddingVertical="10dp"
         android:paddingHorizontal="60dp"
         android:text="12.34"

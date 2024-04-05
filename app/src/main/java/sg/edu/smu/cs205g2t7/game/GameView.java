@@ -14,12 +14,13 @@ import androidx.annotation.NonNull;
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private final Game game;
     private GameThread gameThread;
+
     public GameView(Context context) {
-        this(context, "Anonymous");
+        this(context, 0);
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    public GameView(Context context, String playerName) {
+    public GameView(Context context, int level) {
         super(context);
         setKeepScreenOn(true);
         getHolder().addCallback(this);
@@ -61,7 +62,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 return true;
             }
         });
-        game = new Game(getContext(), getHolder(), playerName);
+        game = new Game(getContext(), getHolder(), level, 2);
         gameThread = new GameThread(game);
     }
 
