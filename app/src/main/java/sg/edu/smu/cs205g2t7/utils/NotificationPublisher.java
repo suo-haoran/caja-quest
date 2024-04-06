@@ -12,8 +12,19 @@ import androidx.core.app.NotificationCompat;
 
 import sg.edu.smu.cs205g2t7.MainActivity;
 import sg.edu.smu.cs205g2t7.R;
-
+/**
+ * Singleton Class responsible for sending notifications in the provided app
+ * context
+ */
 public class NotificationPublisher {
+    /** Singleton, not meant for instantiation */
+    private NotificationPublisher(){}
+    /**
+     * Send a notification with the given title and message
+     * @param context The application context
+     * @param title Notification title
+     * @param message Notification message or body
+     */
     public static void showNotification(Context context, String title, String message) {
         final String channelId = "my_notifications";
         final Object notificationService = context.getSystemService(Context.NOTIFICATION_SERVICE);

@@ -11,9 +11,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import sg.edu.smu.cs205g2t7.R;
-
+/**
+ * User Interface for Records page
+ */
 public class RecordActivity extends AppCompatActivity {
-
+    /**
+     * Creates the view for the app based of the record_main.xml file
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,7 +35,11 @@ public class RecordActivity extends AppCompatActivity {
         rv.setAdapter(new RecordsAdapter(this));
     }
 
-
+    /**
+     * Hides the status bar through the WindowInsetsController interface.
+     * Insets are parts of the screen where the app intersects with system UI
+     * This overlaps between your app and areas where system UI is displayed.
+     */
     private void hideStatusBar() {
         WindowInsetsController wic = getWindow().getInsetsController();
         if (wic != null) {
