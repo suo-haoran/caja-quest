@@ -21,7 +21,7 @@ The destiny of humanity hangs in the balance as Steve, the eco-engineer extraord
 
 - [x] Contains at least 1 activity drawn using 2D graphics
 - Works in real time
-    - [x] Real time elements updated synchronously in each frame(fps)
+    - [x] Real time elements updated synchronously in each frame(Timer arc)
     - [x] Interval elements updated synchronously (Timer) at predetermined interval steps
     - [x] Asynchronous elements updated in threads (Swipe Executor Service)
 - [x] Interactive, responds to user events (On Touch Listener)
@@ -31,8 +31,8 @@ The destiny of humanity hangs in the balance as Steve, the eco-engineer extraord
 ## Additional Features
 
 - At least 1 activity containing Standard GUI Components 
-    - [x] MainActivity
-    - [x] AuthorsActivity
+  - [x] MainActivity
+  - [x] AuthorsActivity
   - [x] RecordsActivity
   - [x] EndGameActivity
 - [x] Store User Record in SQLite
@@ -105,7 +105,7 @@ The `GameView` handles the rendering logic and the `Game` contains the game logi
    
 2. Clock
    - Clock is taken from the lab3 and I believe PJ has done a good job explaining it. 
-     Hence I will not reiterate what PJ have taught.
+     Hence I will not reiterate what PJ has taught.
 
 ### Real time, Interactive, Thread and Synchronization
 
@@ -121,7 +121,7 @@ When a `GameView` is initialized, it will set the screen to always on.
 
 ## Feedbacks
 
-There are three types of feedback mechanism to notify a user:
+There are two types of feedback mechanism to notify a user:
 
 1. Notification
 2. Vibration
