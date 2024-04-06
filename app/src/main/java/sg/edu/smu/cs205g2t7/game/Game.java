@@ -93,8 +93,6 @@ public class Game {
     private int height = 0;
     /** start time in milliseconds */
     private long startTime;
-//    /** TODO: */
-//    private final double avgFps = 0.0;
     /** time elapsed since start */
     private int secondCount = 0;
     /** Specifies the sweep angle */
@@ -103,16 +101,15 @@ public class Game {
     private boolean finished = false;
     /** Provides the minimum timedelta to perform an update */
     private final DeltaStepper upsUpdater = new DeltaStepper(intervalUps, this::upsUpdate);
-//    /** TODO: */
-//    private boolean showFps;
+
     /**
      * Instantiates the game on the current app context, current view and player name.
      * It sets the text for the frame-rate counter, sets the background style,
      * sets the seconds lines, sets the seconds hand, and sets the progression arch
      * @param viewContext app context
      * @param holder the holder for a view
-     * @param level
-     * @param targetLevel
+     * @param level current level index, starts from 1
+     * @param targetLevel final level index, cannot be smaller than level
      */
     public Game(Context viewContext, SurfaceHolder holder, int level, int targetLevel) {
         this.context = viewContext;
@@ -121,6 +118,9 @@ public class Game {
         this.endFlag = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.execavator, null);
         this.player = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.still_down, null);
         this.level = level;
+        if (targetLevel < level) {
+            throw new IllegalArgumentException("level cannot be smaller than target level");
+        }
         this.targetLevel = targetLevel;
         this.crate = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.crate, null);
         this.logo = ResourcesCompat.getDrawable(viewContext.getResources(), R.drawable.logo_small, null);
@@ -352,15 +352,15 @@ public class Game {
     }
     /**
      * Helper method to find if crate is at a corner
-     * @param coordinates - one coordinate object (x, y)
+     * @param coord one coordinate object (x, y)
      * @return true if the crate is at a corner and false otherwise
      */
-    private boolean atCorner(Coordinates coordinates) {
-        return (coordinates.x == 0 || coordinates.x == numColumns - 1) && (coordinates.y == 0 || coordinates.y == numRows - 1);
+    private boolean atCorner(Coordinates coord) {
+        return (coord.x == 0 || coord.x == numColumns - 1) && (coord.y == 0 || coord.y == numRows - 1);
     }
     /**
      * Helper method to find if a particular coordinates is out of bounds
-     * @param coordinates - one coordinate object (x,y)
+     * @param coord one coordinate object (x,y)
      * @return true if the crate is out of bounds and false otherwise.
      */
     private boolean isOutOfBounds(Coordinates coord) {
@@ -385,17 +385,22 @@ public class Game {
     /**
      * To use the canvas, a SwipeExecutor worker Thread must acquire the mutex.
      * After it is done, it will unlock it.
-     * @param onDraw
+     * @param draw a function that takes in a canvas
+     *
+     * <p>
+     * To call this function, you need a function that has the signature
+     * <code>void draw(Canvas canvas)</code> and it can be invoked with
+     * <code>useCanvas(this::draw)</code>
      */
-    private void useCanvas(final Consumer<Canvas> onDraw) {
+    private void useCanvas(final Consumer<Canvas> draw) {
         try {
             final Canvas canvas = holder.lockCanvas();
             try {
-                onDraw.accept(canvas);
+                draw.accept(canvas);
             } finally {
                 try {
                     holder.unlockCanvasAndPost(canvas);
-                } catch (final IllegalStateException e) {
+                } catch (final IllegalStateException | IllegalMonitorStateException e) {
                     // Do nothing
                 }
             }
@@ -404,15 +409,16 @@ public class Game {
         }
     }
     /**
-     * TODO:
+     * Draws the whole game
      */
     public void draw() {
         useCanvas(this::draw);
     }
+
     /**
      * Draw the player, obstacles, crate, background, logo, every obstacle, and the
      * destination.
-     * @param canvas
+     * @param canvas canvas to be drawn on
      */
     private synchronized void drawGame(Canvas canvas) {
         synchronized (mutex) {
@@ -451,7 +457,7 @@ public class Game {
     }
     /**
      * Draw the timer face on the canvas
-     * @param canvas
+     * @param canvas canvas to be drawn on
      */
     private void drawClock(Canvas canvas) {
 
@@ -502,7 +508,7 @@ public class Game {
      * Draws the background, logo, player, obstacles, and crate
      * based of their updated positions. A thread is only able to draw
      * after it acquires the mutex.
-     * @param canvas
+     * @param canvas canvas to be drawn on
      */  
     @SuppressLint("DefaultLocale")
     private void draw(Canvas canvas) {
@@ -513,7 +519,7 @@ public class Game {
         drawClock(canvas);
     }
     /**
-     * TODO: Draw the canvas
+     * Initialize the width, height of the canvas and start time
      * @param width - canvas width
      * @param height - canvas height
      */
