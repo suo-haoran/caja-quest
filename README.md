@@ -39,7 +39,7 @@ The destiny of humanity hangs in the balance as Steve, the eco-engineer extraord
 - [x] Notifications on Win
 - [x] Vibrations on out of bounds
 - [x] Screen always on (in GameView)
-- [x] Using intent to pass data (input your name, then start, in MainActivity)
+- [x] Using intent to pass data (pass level number to GameActivity)
 
 # Code Structure
 
