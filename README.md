@@ -1,3 +1,5 @@
+
+https://github.com/user-attachments/assets/67b527e7-eba4-4044-8f56-0f22d0f5f90c
 # Background
 
 In the year 2100, Earth has undergone significant changes due to rapid technological advancements and environmental challenges. The planet's once-thriving ecosystems have been devastated by climate change and pollution, leading to the rise of sprawling megacities and vast wastelands.
